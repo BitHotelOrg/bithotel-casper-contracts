@@ -1,0 +1,10 @@
+[workspace]
+
+members = [
+    "cep47",
+    "cep47-tests"
+]
+
+[profile.release]
+codegen-units = 1
+lto = true

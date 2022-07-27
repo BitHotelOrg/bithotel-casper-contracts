@@ -1,0 +1,4 @@
+target
+*.wasm
+node_modules
+.vscode
