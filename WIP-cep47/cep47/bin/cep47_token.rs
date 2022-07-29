@@ -169,6 +169,28 @@ fn get_approved() {
 }
 
 #[no_mangle]
+fn lock_token() {
+    let token_id = runtime::get_named_arg::<TokenId>("token_id");
+    let reason = runtime::get_named_arg::<String>("reason");
+    NFTToken::default().lock_token(token_id, reason).unwrap_or_revert()
+    // runtime::ret(CLValue::from_t(ret).unwrap_or_revert());
+}
+
+#[no_mangle]
+fn is_locked() {
+    let token_id = runtime::get_named_arg::<TokenId>("token_id");
+    let ret = NFTToken::default().is_locked(token_id);
+    runtime::ret(CLValue::from_t(ret).unwrap_or_revert());
+}
+
+#[no_mangle]
+fn remove_lock() {
+    let token_id = runtime::get_named_arg::<TokenId>("token_id");
+    let ret = NFTToken::default().remove_lock(token_id);
+    runtime::ret(CLValue::from_t(ret).unwrap_or_revert());
+}
+
+#[no_mangle]
 fn call() {
     // Read arguments for the constructor call.
     let name: String = runtime::get_named_arg("name");
@@ -373,6 +395,34 @@ fn get_entry_points() -> EntryPoints {
             Parameter::new("index", U256::cl_type()),
         ],
         CLType::Option(Box::new(TokenId::cl_type())),
+        EntryPointAccess::Public,
+        EntryPointType::Contract,
+    ));
+    entry_points.add_entry_point(EntryPoint::new(
+        "lock_token",
+        vec![
+            Parameter::new("token_id", TokenId::cl_type()),
+            Parameter::new("reason", String::cl_type()),
+        ],
+        <()>::cl_type(),
+        EntryPointAccess::Public,
+        EntryPointType::Contract,
+    ));
+    entry_points.add_entry_point(EntryPoint::new(
+        "is_locked",
+        vec![
+            Parameter::new("token_id", TokenId::cl_type()),
+        ],
+        CLType::Option(Box::new(CLType::Bool)),
+        EntryPointAccess::Public,
+        EntryPointType::Contract,
+    ));
+    entry_points.add_entry_point(EntryPoint::new(
+        "remove_lock",
+        vec![
+            Parameter::new("token_id", TokenId::cl_type()),
+        ],
+        CLType::Option(Box::new(CLType::Bool)),
         EntryPointAccess::Public,
         EntryPointType::Contract,
     ));

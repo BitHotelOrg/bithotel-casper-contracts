@@ -221,6 +221,31 @@ impl CEP47Instance {
     pub fn meta(&self) -> Meta {
         self.0.query_named_key(String::from("meta"))
     }
+
+    pub fn lock_token(&self, sender: AccountHash, token_id: TokenId, reason: String) {
+        self.0.call_contract(
+            sender,
+            "lock_token",
+            runtime_args! {
+                "token_id" => token_id,
+                "reason" => reason
+            }
+        );
+    }
+
+    pub fn is_locked(&self, token_id: TokenId) -> bool {
+        self.0.query_dictionary::<String>("locked_tokens", token_id.to_string()).is_some()
+    }
+
+    pub fn remove_lock(&self, sender: AccountHash, token_id: TokenId) {
+        self.0.call_contract(
+            sender,
+            "remove_lock",
+            runtime_args! {
+                "token_id" => token_id,
+            }
+        );
+    }
 }
 
 pub fn key_to_str(key: &Key) -> String {

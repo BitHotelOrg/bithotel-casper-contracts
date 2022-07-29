@@ -14,6 +14,7 @@ use crate::{event::CEP47Event, Meta, TokenId};
 
 const BALANCES_DICT: &str = "balances";
 pub const ALLOWANCES_DICT: &str = "allowances";
+pub const LOCKS_DICT: &str = "locked_tokens";
 const METADATA_DICT: &str = "metadata";
 const OWNERS_DICT: &str = "owners";
 const OWNED_TOKENS_BY_INDEX_DICT: &str = "owned_tokens_by_index";
@@ -308,5 +309,36 @@ pub fn emit(event: &CEP47Event) {
     };
     for param in events {
         let _: URef = storage::new_uref(param);
+    }
+}
+
+pub struct LockedTokens {
+    dict: Dict,
+}
+
+impl LockedTokens {
+    pub fn instance() -> LockedTokens {
+        LockedTokens {
+            dict: Dict::instance(LOCKS_DICT),
+        }
+    }
+
+    pub fn init() {
+        Dict::init(LOCKS_DICT)
+    }
+
+    pub fn is_locked(&self, token_id: &TokenId) -> bool {
+        self.dict.get::<String>(&token_id.to_string()).is_some()
+    }
+
+    pub fn set_lock(&self, token_id: &TokenId, reason: String) {
+        self.dict.set(
+            &token_id.to_string(),
+            reason,
+        );
+    }
+
+    pub fn remove_lock(&self, token_id: &TokenId) {
+        self.dict.remove::<String>(&token_id.to_string());
     }
 }

@@ -1,5 +1,5 @@
 use crate::{
-    data::{self, Allowances, Metadata, OwnedTokens, Owners},
+    data::{self, Allowances, Metadata, OwnedTokens, Owners, LockedTokens},
     event::CEP47Event,
     Meta, TokenId,
 };
@@ -14,6 +14,7 @@ pub enum Error {
     WrongArguments = 2,
     TokenIdAlreadyExists = 3,
     TokenIdDoesntExist = 4,
+    TokenLocked = 5,
 }
 
 impl From<Error> for ApiError {
@@ -32,6 +33,7 @@ pub trait CEP47<Storage: ContractStorage>: ContractContext<Storage> {
         OwnedTokens::init();
         Metadata::init();
         Allowances::init();
+        LockedTokens::init();
     }
 
     fn name(&self) -> String {
@@ -219,8 +221,11 @@ pub trait CEP47<Storage: ContractStorage>: ContractContext<Storage> {
         let spender = self.get_caller();
 
         if owner != spender {
-            let allowances_dict = Allowances::instance();
+        let allowances_dict = Allowances::instance();
             for token_id in &token_ids {
+                if self.is_locked(*token_id) == true {
+                    return Err(Error::TokenLocked);
+                }
                 if !self.is_approved(owner, *token_id, spender) {
                     return Err(Error::PermissionDenied);
                 }
@@ -278,5 +283,21 @@ pub trait CEP47<Storage: ContractStorage>: ContractContext<Storage> {
 
     fn emit(&mut self, event: CEP47Event) {
         data::emit(&event);
+    }
+
+    fn lock_token(&mut self, token_id: TokenId, reason: String) -> Result<(), Error> {
+        if self.owner_of(token_id).is_none() {
+            return Err(Error::TokenIdDoesntExist);
+        };
+        LockedTokens::instance().set_lock(&token_id, reason);
+        Ok(())
+    }
+
+    fn is_locked(&self, token_id: TokenId) -> bool {
+        LockedTokens::instance().is_locked(&token_id)
+    }
+
+    fn remove_lock(&mut self, token_id: TokenId) {
+        LockedTokens::instance().remove_lock(&token_id);
     }
 }

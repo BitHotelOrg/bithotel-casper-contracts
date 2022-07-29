@@ -386,3 +386,29 @@ fn test_token_metadata_update() {
     token.update_token_meta(owner, token_id, meta::gold_dragon());
     assert_eq!(token.token_meta(token_id).unwrap(), meta::gold_dragon());
 }
+
+#[test]
+fn test_is_not_locked() {
+    let (env, token, owner) = deploy();
+    let user = env.next_user();
+    let token_id = TokenId::zero();
+    let token_meta = meta::red_dragon();
+
+    token.mint_one(owner, user, token_id, token_meta);
+    assert_eq!(token.is_locked(token_id), false);
+    token.transfer(user, owner, vec![token_id]);
+}
+
+#[test]
+#[should_panic]
+fn test_is_locked() {
+    let (env, token, owner) = deploy();
+    let user = env.next_user();
+    let token_id = TokenId::zero();
+    let token_meta = meta::red_dragon();
+
+    token.mint_one(owner, user, token_id, token_meta);
+    token.lock_token(owner, token_id, String::from("test"));
+    assert_eq!(token.is_locked(token_id), true);
+    token.transfer(user, owner, vec![token_id]);
+}
