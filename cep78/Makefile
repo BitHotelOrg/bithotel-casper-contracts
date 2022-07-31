@@ -1,6 +1,3 @@
-prepare:
-	rustup target add wasm32-unknown-unknown
-
 build-contract:
 	cd contract && cargo build --release --target wasm32-unknown-unknown
 	cd client/mint_session && cargo build --release --target wasm32-unknown-unknown
