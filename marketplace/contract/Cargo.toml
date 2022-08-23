@@ -1,0 +1,37 @@
+[package]
+name = "kunftmarketplace-contract"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+casper-contract = "1.4.4"
+casper-types = "1.5.0"
+casper_types_derive = "0.1.0"
+tiny-keccak={version = "2.0.2", features = ["keccak"]}
+hex = { version = "0.4.3", default-features = false }
+contract-utils = { path = "../utils/contract-utils" }
+
+[profile.release]
+codegen-units = 1
+lto = true
+
+[[bin]]
+name = "marketplace_contract"
+path = "bin/marketplace_contract.rs"
+bench = false
+doctest = false
+test = false
+
+[[bin]]
+name = "pre_buy_sell_order_cspr"
+path = "bin/pre_buy_sell_order_cspr.rs"
+bench = false
+doctest = false
+test = false
+
+[[bin]]
+name = "pre_order_cspr"
+path = "bin/pre_order_cspr.rs"
+bench = false
+doctest = false
+test = false

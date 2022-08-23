@@ -1,4 +1,4 @@
 target
-*.wasm
+cep78/**/*.wasm
 node_modules
 .vscode

@@ -1,0 +1,47 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "mint": "ts-node ./src/cep47/mint.ts",
+    "install:contract": "ts-node ./src/install-contract.ts",
+    "install:cep47": "ts-node ./src/cep47/install.ts",
+    "install:erc20": "ts-node ./src/erc20/install.ts",
+    "cep47:mint": "ts-node ./src/cep47/mint.ts",
+    "test-sign": "ts-node-dev ./src/test-sign.ts",
+    "create-user-profile": "ts-node ./src/create-user-profile.ts",
+    "create-sell-order": "ts-node ./src/create-sell-order.ts",
+    "cancel-sell-order": "ts-node ./src/cancel-sell-order.ts",
+    "set-acceptable-token": "ts-node ./src/set-acceptable-token.ts",
+    "set-fee-wallet": "ts-node ./src/set-fee-wallet.ts",
+    "buy-sell-order-cspr": "ts-node ./src/buy-sell-order-cspr.ts",
+    "use-cep47": "ts-node ./src/cep47/usage.ts",
+    "run-event-listener": "concurrently \"yarn run-marketplace-event-listener\" \"yarn run-cep47-event-listener\"",
+    "run-marketplace-event-listener": "ts-node-dev ./src/run-event-listener.ts",
+    "run-cep47-event-listener": "ts-node-dev ./src/cep47/run-event-listener.ts",
+    "deploy": "ts-node ./src/deploy.ts",
+    "get-contract-values": "ts-node ./src/get-contract-values.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/lodash": "^4.14.182",
+    "@types/node": "^18.0.0",
+    "ts-node": "^10.8.1",
+    "tsc": "^2.0.4",
+    "typescript": "^4.7.4"
+  },
+  "dependencies": {
+    "casper-cep47-js-client": "^1.0.1",
+    "casper-erc20-js-client": "^0.2.0",
+    "casper-js-client-helper": "^1.0.1",
+    "casper-js-sdk": "^2.9.1",
+    "concurrently": "^7.2.2",
+    "dotenv": "^16.0.1",
+    "lodash": "^4.17.21",
+    "mongoose": "^6.4.1",
+    "ts-node-dev": "^2.0.0"
+  }
+}
