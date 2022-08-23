@@ -13,7 +13,7 @@ use casper_types::{
 };
 use contract_utils::{get_key, key_and_value_to_str, key_to_str, set_key, Dict};
 
-use crate::{event::MarketplaceEvent, structs::order::SellOrder, Address, Bids, Error, TokenId};
+use crate::{event::MarketplaceEvent, structs::order::SellOrder, Address, Bids, Error, TokenId, enums::Category};
 
 fn contract_hash_and_value_to_str<T: ToBytes + CLTyped>(
     contract_hash: ContractHash,
@@ -155,6 +155,39 @@ impl AcceptableTokens {
 
     pub fn set(&self, contract_hash: ContractHash, fee: u32) {
         self.dict.set(&key_to_str(&Key::from(contract_hash)), fee)
+    }
+
+    pub fn remove(&self, contract_hash: ContractHash) {
+        self.dict
+            .remove::<u32>(&key_to_str(&Key::from(contract_hash)))
+    }
+}
+
+const ACCEPTABLE_COLLECTIONS_DICT: &str = "acceptable_collections";
+
+pub struct AcceptableCollections {
+    dict: Dict,
+}
+
+impl AcceptableCollections {
+    pub fn instance() -> AcceptableCollections {
+        AcceptableCollections {
+            dict: Dict::instance(ACCEPTABLE_COLLECTIONS_DICT),
+        }
+    }
+
+    pub fn init() {
+        Dict::init(ACCEPTABLE_COLLECTIONS_DICT)
+    }
+
+    pub fn get(&self, contract_hash: ContractHash) -> Category {
+        self.dict
+            .get(&key_to_str(&Key::from(contract_hash)))
+            .unwrap_or_revert_with(Error::NotAcceptableCollection)
+    }
+
+    pub fn set(&self, contract_hash: ContractHash, category: Category) {
+        self.dict.set(&key_to_str(&Key::from(contract_hash)), category)
     }
 
     pub fn remove(&self, contract_hash: ContractHash) {

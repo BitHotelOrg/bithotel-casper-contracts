@@ -10,12 +10,12 @@ use casper_types::{
 use contract_utils::{set_key, ContractContext, ContractStorage};
 
 use crate::{
-    data::{self, AcceptableTokens, BuyOrders, DepositPurse, SellOrders},
+    data::{self, AcceptableTokens, AcceptableCollections, BuyOrders, DepositPurse, SellOrders},
     event::MarketplaceEvent,
     interfaces::{icep47::ICEP47, ierc20::IERC20},
     libs::{u256_to_512, u512_to_u256},
     structs::order::{BuyOrder, SellOrder},
-    Address, Error, Time, TokenId,
+    Address, Error, Time, TokenId, enums::Category,
 };
 pub trait Marketplace<Storage: ContractStorage>: ContractContext<Storage> {
     fn init(&mut self, acceptable_tokens: BTreeMap<String, u32>, fee_wallet: Address) {
@@ -23,6 +23,7 @@ pub trait Marketplace<Storage: ContractStorage>: ContractContext<Storage> {
         BuyOrders::init();
         DepositPurse::init();
         AcceptableTokens::init();
+        AcceptableCollections::init();
 
         acceptable_tokens.iter().for_each(|token| {
             let contract_hash = ContractHash::from_formatted_str(token.0).unwrap();
@@ -40,8 +41,9 @@ pub trait Marketplace<Storage: ContractStorage>: ContractContext<Storage> {
         pay_token: Option<ContractHash>,
         tokens: BTreeMap<TokenId, U256>,
     ) {
-        // Check pay token is acceptable
+        let category = AcceptableCollections::instance().get(collection);
 
+        // Check pay token is acceptable
         tokens.iter().for_each(|(token_id, price)| {
             let sell_order: SellOrder = SellOrder {
                 creator: caller,
@@ -51,6 +53,7 @@ pub trait Marketplace<Storage: ContractStorage>: ContractContext<Storage> {
                 price: *price,
                 start_time,
                 status: 0u8,
+                category,
             };
 
             let approved = ICEP47::new(collection)
@@ -477,6 +480,10 @@ pub trait Marketplace<Storage: ContractStorage>: ContractContext<Storage> {
         AcceptableTokens::instance().set(token, fee);
     }
 
+    fn set_acceptable_collection(&mut self, collection: ContractHash, category: Category) {
+        AcceptableCollections::instance().set(collection, category);
+    }
+
     fn fee(&self, token: Option<ContractHash>) -> u32 {
         match token {
             Some(contract_hash) => AcceptableTokens::instance().get(contract_hash),
@@ -486,6 +493,10 @@ pub trait Marketplace<Storage: ContractStorage>: ContractContext<Storage> {
 
     fn remove_acceptable_token(&mut self, token: ContractHash) {
         AcceptableTokens::instance().remove(token);
+    }
+
+    fn remove_acceptable_collection(&mut self, collection: ContractHash) {
+        AcceptableCollections::instance().remove(collection);
     }
 
     fn set_fee_wallet(&mut self, wallet: Address) {

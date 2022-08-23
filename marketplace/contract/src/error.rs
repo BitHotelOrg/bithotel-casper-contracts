@@ -24,6 +24,7 @@ pub enum Error {
     NotExistToken,
     NotTokenOwner,
     NotAcceptableToken,
+    NotAcceptableCollection,
     /// Operation would cause an integer overflow.
     Overflow,
     InvalidContext,

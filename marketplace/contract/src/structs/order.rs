@@ -2,7 +2,7 @@ use alloc::vec::Vec;
 use casper_types::{ContractHash, U256};
 use casper_types_derive::{CLTyped, FromBytes, ToBytes};
 
-use crate::{Address, Time, TokenId};
+use crate::{Address, Time, TokenId, enums::Category};
 
 // order status u8 0:pending, 1:completed, 2:canceled
 
@@ -15,6 +15,7 @@ pub struct SellOrder {
     pub price: U256,
     pub start_time: Time,
     pub status: u8,
+    pub category: Category,
 }
 
 #[derive(Clone, Copy, Debug, CLTyped, ToBytes, FromBytes)]
