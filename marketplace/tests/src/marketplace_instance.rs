@@ -37,8 +37,8 @@ impl MarketplaceInstance {
         sender: AccountHash,
         start_time: Time,
         collection: String,
-        tokens: BTreeMap<TokenId, U256>,
         pay_token: Option<String>,
+        tokens: BTreeMap<TokenId, U256>,
     ) {
         self.0.call_contract(
             sender,
@@ -46,8 +46,8 @@ impl MarketplaceInstance {
             runtime_args! {
                 "start_time" => start_time,
                 "collection" => collection,
-                "tokens" => tokens,
                 "pay_token" => pay_token,
+                "tokens" => tokens,
             },
         )
     }

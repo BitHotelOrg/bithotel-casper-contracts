@@ -1,4 +1,4 @@
-use alloc::{collections::BTreeMap, string::String, vec, vec::Vec};
+use alloc::{collections::BTreeMap, string::String, vec::Vec};
 use casper_contract::{
     contract_api::{runtime, system},
     unwrap_or_revert::UnwrapOrRevert,
@@ -10,12 +10,13 @@ use casper_types::{
 use contract_utils::{set_key, ContractContext, ContractStorage};
 
 use crate::{
-    data::{self, AcceptableTokens, AcceptableCollections, BuyOrders, DepositPurse, SellOrders},
+    data::{self, AcceptableCollections, AcceptableTokens, BuyOrders, DepositPurse, SellOrders},
+    enums::Category,
     event::MarketplaceEvent,
-    interfaces::{icep47::ICEP47, ierc20::IERC20},
+    interfaces::{icep78::ICEP78, ierc20::IERC20},
     libs::{u256_to_512, u512_to_u256},
     structs::order::{BuyOrder, SellOrder},
-    Address, Error, Time, TokenId, enums::Category,
+    Address, Error, Time, TokenId,
 };
 pub trait Marketplace<Storage: ContractStorage>: ContractContext<Storage> {
     fn init(&mut self, acceptable_tokens: BTreeMap<String, u32>, fee_wallet: Address) {
@@ -56,17 +57,17 @@ pub trait Marketplace<Storage: ContractStorage>: ContractContext<Storage> {
                 category,
             };
 
-            let approved = ICEP47::new(collection)
-                .get_approved(caller, *token_id)
+            let approved = ICEP78::new(collection)
+                .get_approved(*token_id)
                 .unwrap_or_revert_with(Error::RequireApprove);
 
             if !approved.eq(&Address::from(self.contract_package_hash())) {
                 self.revert(Error::RequireApprove);
             }
-            ICEP47::new(collection).transfer_from(
+            ICEP78::new(collection).transfer(
                 caller,
                 Address::from(self.contract_package_hash()),
-                vec![*token_id],
+                *token_id,
             );
             SellOrders::instance().set(collection, *token_id, sell_order);
             self.emit(MarketplaceEvent::SellOrderCreated {
@@ -92,7 +93,11 @@ pub trait Marketplace<Storage: ContractStorage>: ContractContext<Storage> {
                 self.revert(Error::NotOrderCreator);
             }
             self.assert_order_is_active(&order);
-            ICEP47::new(collection).transfer(caller, vec![*token_id]);
+            ICEP78::new(collection).transfer(
+                Address::from(self.contract_package_hash()),
+                caller,
+                *token_id,
+            );
             SellOrders::instance().remove(collection, *token_id);
             self.emit(MarketplaceEvent::SellOrderCanceled {
                 creator: order.creator,
@@ -125,7 +130,11 @@ pub trait Marketplace<Storage: ContractStorage>: ContractContext<Storage> {
         // Send NFT
         match additional_recipient {
             Some(address) => {
-                ICEP47::new(order.collection).transfer(address, vec![token_id]);
+                ICEP78::new(order.collection).transfer(
+                    Address::from(self.contract_package_hash()),
+                    address,
+                    token_id,
+                );
                 // ICEP47::new(collection).transfer_from(
                 //     order.creator,
                 //     Address::from(address),
@@ -133,7 +142,11 @@ pub trait Marketplace<Storage: ContractStorage>: ContractContext<Storage> {
                 // );
             }
             None => {
-                ICEP47::new(order.collection).transfer(caller, vec![token_id]);
+                ICEP78::new(order.collection).transfer(
+                    Address::from(self.contract_package_hash()),
+                    caller,
+                    token_id,
+                );
                 // ICEP47::new(collection).transfer_from(
                 //     order.creator,
                 //     Address::from(caller),
@@ -187,12 +200,16 @@ pub trait Marketplace<Storage: ContractStorage>: ContractContext<Storage> {
         // Send NFT
         match additional_recipient {
             Some(address) => {
-                ICEP47::new(order.collection).transfer(address, vec![token_id]);
-                ICEP47::new(collection).transfer_from(order.creator, address, vec![token_id]);
+                ICEP78::new(order.collection).transfer(
+                    Address::from(self.contract_package_hash()),
+                    address,
+                    token_id,
+                );
+                ICEP78::new(collection).transfer(order.creator, address, token_id);
             }
             None => {
                 // ICEP47::new(order.collection).transfer(Address::from(caller), vec![token_id]);
-                ICEP47::new(collection).transfer_from(order.creator, caller, vec![token_id]);
+                ICEP78::new(collection).transfer(order.creator, caller, token_id);
             }
         };
 
@@ -321,15 +338,15 @@ pub trait Marketplace<Storage: ContractStorage>: ContractContext<Storage> {
         token_id: TokenId,
         bidder: Address,
     ) {
-        let token_owner = ICEP47::new(collection)
+        let token_owner = ICEP78::new(collection)
             .owner_of(token_id)
             .unwrap_or_revert_with(Error::NotExistToken);
         if caller.ne(&token_owner) {
             self.revert(Error::NotTokenOwner);
         }
 
-        let approved = ICEP47::new(collection)
-            .get_approved(caller, token_id)
+        let approved = ICEP78::new(collection)
+            .get_approved(token_id)
             .unwrap_or_revert_with(Error::RequireApprove);
 
         if !approved.eq(&Address::from(self.contract_package_hash())) {
@@ -359,7 +376,7 @@ pub trait Marketplace<Storage: ContractStorage>: ContractContext<Storage> {
                     start_time: bid.start_time,
                     owner: token_owner,
                 });
-                ICEP47::new(collection).transfer_from(caller, bidder, vec![token_id]);
+                ICEP78::new(collection).transfer(caller, bidder, token_id);
                 bids.remove(&bidder);
                 BuyOrders::instance().set(collection, token_id, bids);
             }

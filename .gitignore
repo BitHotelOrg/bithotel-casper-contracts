@@ -2,3 +2,7 @@ target
 cep78/**/*.wasm
 node_modules
 .vscode
+
+# Added by cargo
+
+/target
