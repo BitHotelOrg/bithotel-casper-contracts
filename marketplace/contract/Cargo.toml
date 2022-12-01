@@ -1,0 +1,25 @@
+[package]
+name = "marketplace"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# A library for developing Casper network smart contracts.
+casper-contract = {version = "1.4.4", features = ["test-support"]}
+# Types shared by many Casper crates for use on a Casper Network.
+casper-types = "1.4.6"
+casper_types_derive = "0.1.0"
+serde = { version = "1", features = ["derive", "alloc"], default-features = false }
+
+[[bin]]
+name = "contract"
+path = "src/lib.rs"
+bench = false
+doctest = false
+test = false
+
+[profile.release]
+codegen-units = 1
+lto = true
