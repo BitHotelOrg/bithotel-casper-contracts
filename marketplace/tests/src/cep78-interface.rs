@@ -7,7 +7,7 @@ use test_env::{TestContract, TestEnv};
 
 use crate::utils::{key_and_value_to_str, key_to_str};
 
-pub type TokenId = U256;
+pub type TokenId = u64;
 pub type Meta = BTreeMap<String, String>;
 
 pub struct CEP78Instance(TestContract);

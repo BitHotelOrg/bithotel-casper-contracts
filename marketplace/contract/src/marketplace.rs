@@ -15,7 +15,6 @@ use casper_contract::{
     contract_api::{runtime, storage},
     unwrap_or_revert::UnwrapOrRevert,
 };
-use casper_types::URef;
 // Importing specific Casper types.
 // use casper_types::account::AccountHash;
 use casper_types::{
@@ -26,6 +25,7 @@ use casper_types::{
 // Creating constants for the various contract entry points.
 const ENTRY_POINT_INIT: &str = "init";
 const ENTRY_POINT_SET_ACCEPTED_TOKEN: &str = "set_accepted_token";
+const ENTRY_POINT_ADD_LISTING: &str = "add_listing";
 // const ENTRY_POINT_ADD_LISTING: &str = "add_listing";
 
 // Creating constants for the entry point arguments.
@@ -34,6 +34,10 @@ const FEE_WALLET_ARG: &str = "fee_wallet_arg";
 const ACCEPTED_TOKENS_ARG: &str = "accepted_tokens_arg";
 const TOKEN_ARG: &str = "token_arg";
 const FEE_ARG: &str = "fee_arg";
+const COLLECTION_ARG: &str = "collection_arg";
+const TOKEN_ID_ARG: &str = "token_id_arg";
+const PAY_TOKEN_ARG: &str = "pay_token_arg";
+const PRICE_ARG: &str = "price_arg";
 
 // Creating constants for values within the contract.
 const FEE_WALLET: &str = "fee_wallet";
@@ -84,19 +88,18 @@ pub extern "C" fn set_accepted_token() {
 }
 
 #[no_mangle]
-pub extern "C" fn create_sell_order() {
+pub extern "C" fn add_listing() {
     let caller = get_immediate_caller_address().ok().unwrap();
-    let start_time: Time = runtime::get_named_arg("start_time");
-    let collection: ContractHash = {
-        let collection_str: String = runtime::get_named_arg("collection");
-        ContractHash::from_formatted_str(&collection_str).unwrap()
-    };
-    let token_id: TokenId = runtime::get_named_arg("token_id");
-    let price: U256 = runtime::get_named_arg("price");
-    let pay_token: Option<ContractHash> = {
-        let pay_token_str: Option<String> = runtime::get_named_arg("pay_token");
-        pay_token_str.map(|str| ContractHash::from_formatted_str(&str).unwrap())
-    };
+    let collection = runtime::get_named_arg::<Key>(COLLECTION_ARG)
+        .into_hash()
+        .map(|hash| ContractHash::new(hash))
+        .unwrap();
+    let token_id: TokenId = runtime::get_named_arg(TOKEN_ID_ARG);
+    let price: U256 = runtime::get_named_arg(PRICE_ARG);
+    let pay_token = runtime::get_named_arg::<Key>(PAY_TOKEN_ARG)
+        .into_hash()
+        .map(|hash| ContractHash::new(hash))
+        .unwrap();
 
     let sell_order: SellOrder = SellOrder {
         creator: caller,
@@ -104,46 +107,35 @@ pub extern "C" fn create_sell_order() {
         token_id,
         pay_token,
         price,
-        start_time,
         status: 0u8,
     };
 
-    let approved = ICEP78::new(collection)
-        .get_approved(caller, token_id)
-        .unwrap_or_revert_with(MarketplaceError::NFTRequireApprove);
+    let nft = ICEP78::new(collection);
+
+    // let approved = nft
+    //     .get_approved(caller, token_id)
+    //     .unwrap_or_revert_with(MarketplaceError::NFTRequireApprove);
 
     // TODO:
     // if !approved.eq(&Address::from(self.contract_package_hash())) {
     //     self.revert(Error::RequireApprove);
     // }
     // "marketplace_package_hash"
-    ICEP78::new(collection).transfer_from(
-        caller,
-        Address::from(
-            *runtime::get_call_stack()
-                .last()
-                .unwrap()
-                .contract_hash()
-                .unwrap(),
-        ),
-        vec![token_id],
-    );
-    let sell_orders_uref = *runtime::get_key(SELL_ORDERS_UREF)
+
+    let marketplace_contract_hash = *runtime::get_call_stack()
+        .last()
         .unwrap()
-        .as_uref()
+        .contract_hash()
         .unwrap();
-    let mut key = collection.to_string();
-    key.push_str(&token_id.to_string());
-    storage::dictionary_put(sell_orders_uref, &key, sell_order)
-    // SellOrders::instance().set(collection, token_id, sell_order);
-    // self.emit(MarketplaceEvent::SellOrderCreated {
-    //     creator: caller,
-    //     collection,
-    //     token_id: *token_id,
-    //     pay_token,
-    //     price: *price,
-    //     start_time,
-    // });
+
+    nft.transfer(caller, caller, token_id);
+    // let sell_orders_uref = *runtime::get_key(SELL_ORDERS_UREF)
+    //     .unwrap()
+    //     .as_uref()
+    //     .unwrap();
+    // let mut key = collection.to_string();
+    // key.push_str(&token_id.to_string());
+    // storage::dictionary_put(sell_orders_uref, &key, sell_order)
 }
 
 //This is the full `call` function as defined within the donation contract.
@@ -181,9 +173,22 @@ pub extern "C" fn call() {
         EntryPointAccess::Public,
         EntryPointType::Contract,
     );
+    let add_listing_entry_point = EntryPoint::new(
+        ENTRY_POINT_ADD_LISTING,
+        vec![
+            Parameter::new(COLLECTION_ARG, CLType::String),
+            Parameter::new(TOKEN_ID_ARG, CLType::U256),
+            Parameter::new(PAY_TOKEN_ARG, CLType::String),
+            Parameter::new(PRICE_ARG, CLType::U256),
+        ],
+        CLType::URef,
+        EntryPointAccess::Public,
+        EntryPointType::Contract,
+    );
     let mut entry_points = EntryPoints::new();
     entry_points.add_entry_point(init_entry_point);
     entry_points.add_entry_point(set_accepted_token_entry_point);
+    entry_points.add_entry_point(add_listing_entry_point);
 
     let named_keys = NamedKeys::new();
 

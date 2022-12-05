@@ -8,9 +8,8 @@ pub struct SellOrder {
     pub creator: Address,
     pub collection: ContractHash,
     pub token_id: TokenId,
-    pub pay_token: Option<ContractHash>,
+    pub pay_token: ContractHash,
     pub price: U256,
-    pub start_time: Time,
     pub status: u8,
 }
 

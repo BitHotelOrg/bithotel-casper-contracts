@@ -1,9 +1,11 @@
 #![allow(dead_code)]
 extern crate alloc;
 
+use core::ops::Add;
+
 use alloc::vec::Vec;
 use casper_contract::contract_api::runtime;
-use casper_types::{runtime_args, ContractHash, RuntimeArgs, U256};
+use casper_types::{account::AccountHash, runtime_args, ContractHash, Key, RuntimeArgs, U256};
 
 use crate::{enums::Address, TokenId};
 
@@ -57,25 +59,16 @@ impl ICEP78 {
         )
     }
 
-    pub fn transfer(&self, recipient: Address, token_ids: Vec<U256>) {
+    pub fn transfer(&self, sender: Address, recipient: Address, token_id: TokenId) {
         runtime::call_contract::<()>(
             self.contract_hash,
             "transfer",
             runtime_args! {
-              "recipient" => recipient,
-              "token_ids" => token_ids
-            },
-        );
-    }
-
-    pub fn transfer_from(&self, sender: Address, recipient: Address, token_ids: Vec<U256>) {
-        runtime::call_contract::<()>(
-            self.contract_hash,
-            "transfer_from",
-            runtime_args! {
-              "sender" => sender,
-              "recipient" => recipient,
-              "token_ids" => token_ids
+                // "nft_contract_hash" => self.contract_hash,
+                "token_id" => token_id,
+                "target_key" => recipient,
+                "source_key" => sender,
+                "is_hash_identifier_mode" => false,
             },
         );
     }
