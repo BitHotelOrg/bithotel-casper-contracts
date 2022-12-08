@@ -75,6 +75,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "casper-serde-json-wasm"
+version = "0.4.1"
+source = "git+https://github.com/darthsiroftardis/casper-serde-json-wasm?branch=casper-no-std#6b72ee2021014e1f9d39b4b48fb1ec2c43f4c232"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "casper-types"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -98,6 +107,17 @@ dependencies = [
  "serde_bytes",
  "serde_json",
  "uint",
+]
+
+[[package]]
+name = "casper_types_derive"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1185d558597a7985e936c1e312810e46d3904888b298635f78370b729055fa28"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -307,7 +327,10 @@ name = "marketplace"
 version = "0.1.0"
 dependencies = [
  "casper-contract",
+ "casper-serde-json-wasm",
  "casper-types",
+ "casper_types_derive",
+ "serde",
 ]
 
 [[package]]

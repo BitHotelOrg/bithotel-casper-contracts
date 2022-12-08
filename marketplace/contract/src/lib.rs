@@ -1,6 +1,5 @@
 #![no_std]
 #![no_main]
-#[macro_use]
 extern crate alloc;
 
 mod enums;
@@ -10,6 +9,7 @@ mod marketplace;
 mod structs;
 mod utils;
 use casper_types::ContractHash;
+use structs::dict::Dict;
 pub type Time = u64;
 pub type TokenId = u64;
 pub type Token = (ContractHash, TokenId);

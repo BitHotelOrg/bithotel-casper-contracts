@@ -1,6 +1,8 @@
+use core::ops::Add;
+
 use crate::{
-    enums::Address, error::MarketplaceError, interfaces::icep78::ICEP78, structs::order::SellOrder,
-    utils::get_immediate_caller_address, Time, TokenId,
+    error::MarketplaceError, interfaces::icep78::ICEP78, structs::order::Listing,
+    utils::get_current_address, Dict, TokenId,
 };
 
 use alloc::{boxed::Box, collections::BTreeMap};
@@ -9,14 +11,11 @@ use alloc::{
     string::{String, ToString},
     vec,
 };
-// Importing aspects of the Casper platform.
-// use casper_contract::contract_api::storage::dictionary_get;
 use casper_contract::{
     contract_api::{runtime, storage},
     unwrap_or_revert::UnwrapOrRevert,
 };
 // Importing specific Casper types.
-// use casper_types::account::AccountHash;
 use casper_types::{
     contracts::NamedKeys, runtime_args, CLType, ContractHash, EntryPoint, EntryPointAccess,
     EntryPointType, EntryPoints, Key, Parameter, RuntimeArgs, U256,
@@ -26,7 +25,8 @@ use casper_types::{
 const ENTRY_POINT_INIT: &str = "init";
 const ENTRY_POINT_SET_ACCEPTED_TOKEN: &str = "set_accepted_token";
 const ENTRY_POINT_ADD_LISTING: &str = "add_listing";
-// const ENTRY_POINT_ADD_LISTING: &str = "add_listing";
+const ENTRY_POINT_CANCEL_LISTING: &str = "cancel_listing";
+const ENTRY_POINT_EXECUTE_LISTING: &str = "execute_listing";
 
 // Creating constants for the entry point arguments.
 const CONTRACT_NAME_ARG: &str = "contract_name_arg";
@@ -38,40 +38,40 @@ const COLLECTION_ARG: &str = "collection_arg";
 const TOKEN_ID_ARG: &str = "token_id_arg";
 const PAY_TOKEN_ARG: &str = "pay_token_arg";
 const PRICE_ARG: &str = "price_arg";
+const LISTING_ID_ARG: &str = "listing_id_arg";
 
 // Creating constants for values within the contract.
 const FEE_WALLET: &str = "fee_wallet";
 const ACCEPTED_TOKENS_DICT: &str = "accepted_tokens_dict";
-const SELL_ORDERS_DICT: &str = "sell_orders_dict";
+const ACTIVE_LISTINGS_DICT: &str = "active_listings_dict";
+const EXECUTED_LISTINGS_DICT: &str = "executed_listings_dict";
+
+const LISTING_COUNTER: &str = "listing_counter";
 
 // Creating constants for the Urefs
-const ACCEPTED_TOKENS_UREF: &str = "accepted_tokens_uref";
-const SELL_ORDERS_UREF: &str = "sell_orders_uref";
+// const ACCEPTED_TOKENS_UREF: &str = "accepted_tokens_uref";
+// const SELL_ORDERS_UREF: &str = "added_listings_uref";
+// const EXECUTED_ORDERS_UREF: &str = "executed_orders_uref";
 
 // This entry point initializes the marketplace, setting up the fee wallet
 // and creating a dictionary to track the accepted tokens.
+
+// keys to intergers
+// runtime to store things?
+
 #[no_mangle]
 pub extern "C" fn init() {
     let fee_wallet_hash = runtime::get_named_arg::<Key>(FEE_WALLET_ARG);
     let accepted_tokens = runtime::get_named_arg::<BTreeMap<String, u32>>(ACCEPTED_TOKENS_ARG);
     runtime::put_key(FEE_WALLET, fee_wallet_hash.into());
-    storage::new_dictionary(SELL_ORDERS_DICT).unwrap_or_revert();
-    storage::new_dictionary(ACCEPTED_TOKENS_DICT).unwrap_or_revert();
-    let sell_orders_dict = *runtime::get_key(SELL_ORDERS_DICT)
-        .unwrap()
-        .as_uref()
-        .unwrap();
-    let accepted_tokens_dict = *runtime::get_key(ACCEPTED_TOKENS_DICT)
-        .unwrap()
-        .as_uref()
-        .unwrap();
-    runtime::put_key(SELL_ORDERS_UREF, Key::from(sell_orders_dict));
-    runtime::put_key(ACCEPTED_TOKENS_UREF, Key::from(accepted_tokens_dict));
-    // Create a dictionary to track the mapping of account hashes to number of donations made.
+    Dict::init(ACCEPTED_TOKENS_DICT);
+    Dict::init(ACTIVE_LISTINGS_DICT);
+    Dict::init(EXECUTED_LISTINGS_DICT);
 
+    let accepted_tokens_dict = Dict::instance(ACCEPTED_TOKENS_DICT);
     accepted_tokens.iter().for_each(|token| {
         let contract_hash = ContractHash::from_formatted_str(token.0).unwrap();
-        storage::dictionary_put(accepted_tokens_dict, &contract_hash.to_string(), *token.1)
+        accepted_tokens_dict.set(&contract_hash.to_string(), *token.1)
     });
 }
 
@@ -80,16 +80,21 @@ pub extern "C" fn set_accepted_token() {
     let contract_hash =
         ContractHash::from_formatted_str(&runtime::get_named_arg::<String>(TOKEN_ARG)).unwrap();
     let token_fee = runtime::get_named_arg::<u32>(FEE_ARG);
-    let accepted_tokens_uref = *runtime::get_key(ACCEPTED_TOKENS_UREF)
-        .unwrap()
-        .as_uref()
-        .unwrap();
-    storage::dictionary_put(accepted_tokens_uref, &contract_hash.to_string(), token_fee);
+    let accepted_tokens_dict = Dict::instance(ACCEPTED_TOKENS_DICT);
+    accepted_tokens_dict.set(&contract_hash.to_string(), token_fee)
 }
 
 #[no_mangle]
 pub extern "C" fn add_listing() {
-    let caller = get_immediate_caller_address().ok().unwrap();
+    let stack = runtime::get_call_stack();
+    let marketplace_package_hash = get_current_address(
+        runtime::get_call_stack()
+            .into_iter()
+            .rev()
+            .next()
+            .unwrap_or_revert(),
+    );
+    let caller = runtime::get_caller();
     let collection = runtime::get_named_arg::<Key>(COLLECTION_ARG)
         .into_hash()
         .map(|hash| ContractHash::new(hash))
@@ -101,8 +106,8 @@ pub extern "C" fn add_listing() {
         .map(|hash| ContractHash::new(hash))
         .unwrap();
 
-    let sell_order: SellOrder = SellOrder {
-        creator: caller,
+    let listing = Listing {
+        creator: caller.into(),
         collection,
         token_id,
         pay_token,
@@ -111,31 +116,75 @@ pub extern "C" fn add_listing() {
     };
 
     let nft = ICEP78::new(collection);
+    let approved = nft
+        .get_approved(caller.into(), token_id)
+        .unwrap_or_revert_with(MarketplaceError::NFTRequireApprove);
 
-    // let approved = nft
-    //     .get_approved(caller, token_id)
-    //     .unwrap_or_revert_with(MarketplaceError::NFTRequireApprove);
+    // TODO: this
+    // nft.transfer(caller.into(), marketplace_package_hash.into(), token_id);
 
-    // TODO:
-    // if !approved.eq(&Address::from(self.contract_package_hash())) {
-    //     self.revert(Error::RequireApprove);
-    // }
-    // "marketplace_package_hash"
-
-    let marketplace_contract_hash = *runtime::get_call_stack()
-        .last()
+    let active_listings = Dict::instance(ACTIVE_LISTINGS_DICT);
+    let listing_counter_uref = runtime::get_key(LISTING_COUNTER)
         .unwrap()
-        .contract_hash()
+        .into_uref()
         .unwrap();
+    let current_listing_id = storage::read::<u64>(listing_counter_uref).unwrap().unwrap();
+    let next_listing_id = current_listing_id.add(1);
+    active_listings.set(&next_listing_id.to_string(), listing);
+    storage::add::<u64>(listing_counter_uref, 1u64);
+}
 
-    nft.transfer(caller, caller, token_id);
-    // let sell_orders_uref = *runtime::get_key(SELL_ORDERS_UREF)
-    //     .unwrap()
-    //     .as_uref()
-    //     .unwrap();
-    // let mut key = collection.to_string();
-    // key.push_str(&token_id.to_string());
-    // storage::dictionary_put(sell_orders_uref, &key, sell_order)
+#[no_mangle]
+pub extern "C" fn cancel_listing() {
+    let stack = runtime::get_call_stack();
+    let marketplace_package_hash = get_current_address(
+        runtime::get_call_stack()
+            .into_iter()
+            .rev()
+            .next()
+            .unwrap_or_revert(),
+    );
+    let caller = runtime::get_caller();
+    let listing_id = runtime::get_named_arg::<u64>(LISTING_ID_ARG);
+
+    runtime::print(&listing_id.to_string());
+
+    let active_listings = Dict::instance(ACTIVE_LISTINGS_DICT);
+    let listing = active_listings
+        .get::<Listing>(&listing_id.to_string())
+        .unwrap_or_revert_with(MarketplaceError::ListingNotFound);
+
+    if listing.creator != caller.into() {
+        runtime::revert(MarketplaceError::NoOrderOwner);
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn execute_listing() {
+    let stack = runtime::get_call_stack();
+    let marketplace_package_hash = get_current_address(
+        runtime::get_call_stack()
+            .into_iter()
+            .rev()
+            .next()
+            .unwrap_or_revert(),
+    );
+
+    let caller = runtime::get_caller();
+
+    let collection = runtime::get_named_arg::<Key>(COLLECTION_ARG)
+        .into_hash()
+        .map(|hash| ContractHash::new(hash))
+        .unwrap();
+    let listing_id = runtime::get_named_arg::<u64>(LISTING_ID_ARG);
+
+    let listings = Dict::instance(ACTIVE_LISTINGS_DICT);
+
+    let listing: Listing = listings.get::<Listing>(&listing_id.to_string()).unwrap();
+
+    if listing.creator != caller.into() {
+        runtime::revert(MarketplaceError::NoOrderOwner);
+    }
 }
 
 //This is the full `call` function as defined within the donation contract.
@@ -185,12 +234,27 @@ pub extern "C" fn call() {
         EntryPointAccess::Public,
         EntryPointType::Contract,
     );
+    let cancel_listing_entry_point = EntryPoint::new(
+        ENTRY_POINT_CANCEL_LISTING,
+        vec![
+            Parameter::new(COLLECTION_ARG, CLType::String),
+            Parameter::new(TOKEN_ID_ARG, CLType::U256),
+        ],
+        CLType::URef,
+        EntryPointAccess::Public,
+        EntryPointType::Contract,
+    );
     let mut entry_points = EntryPoints::new();
     entry_points.add_entry_point(init_entry_point);
     entry_points.add_entry_point(set_accepted_token_entry_point);
     entry_points.add_entry_point(add_listing_entry_point);
+    entry_points.add_entry_point(cancel_listing_entry_point);
 
-    let named_keys = NamedKeys::new();
+    let listing_count_start = storage::new_uref(0u64);
+
+    let mut named_keys = NamedKeys::new();
+
+    named_keys.insert(String::from(LISTING_COUNTER), listing_count_start.into());
 
     let (contract_hash, _contract_version) = storage::new_contract(
         entry_points,

@@ -7,15 +7,14 @@ pub(crate) fn get_contract_hash(
     account: AccountHash,
     contract_name: &str,
 ) -> ContractHash {
-    let contract_hash = builder
+    builder
         .get_expected_account(account)
         .named_keys()
         .get(contract_name)
         .expect("must have contract hash key as part of contract creation")
         .into_hash()
         .map(|hash| ContractHash::new(hash))
-        .expect("must get contract hash");
-    contract_hash
+        .expect("must get contract hash")
 }
 
 pub(crate) fn query_stored_value<T: CLTyped + FromBytes>(

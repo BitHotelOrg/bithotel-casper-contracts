@@ -6,13 +6,19 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies]
-casper-contract = {version = "1.4.4", features = ["test-support"]}
+[dev-dependencies]
+casper-contract = {version = "1.4.4", default-features = false, features = ["test-support"]}
 casper-engine-test-support = { version = "2.2.0", features = ["test-support"] }
 casper-execution-engine = "2.0.0"
 casper-types = "1.5.0"
 serde = { version = "1.0", default-features = false }
 serde_json = "1.0.81"
+
+[[bin]]
+name = "marketplace"
+path = "src/lib.rs"
+bench = false
+doctest = false
 
 [features]
 default = ["casper-contract/std", "casper-contract/test-support"]

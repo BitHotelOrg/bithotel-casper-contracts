@@ -1,5 +1,5 @@
 // extern crate alloc;
-use std::{collections::BTreeMap, default};
+use std::collections::BTreeMap;
 // Outlining aspects of the Casper test support crate to include.
 use casper_engine_test_support::{
     ExecuteRequestBuilder, InMemoryWasmTestBuilder, WasmTestBuilder, DEFAULT_ACCOUNT_ADDR,
@@ -13,7 +13,9 @@ use crate::utility::{
 };
 // Custom Casper types that will be used within this test.
 use self::meta::red_dragon;
-use casper_types::{runtime_args, ContractHash, Key, RuntimeArgs, U256};
+use casper_types::{
+    bytesrepr::FromBytes, runtime_args, CLTyped, ContractHash, Key, RuntimeArgs, U256,
+};
 use serde::{Deserialize, Serialize};
 
 // Calling the contract deploy.
@@ -24,6 +26,7 @@ const ERC20: &str = "erc20.wasm";
 // Setting entry points constants
 const ENTRY_POINT_SET_ACCEPTED_TOKEN: &str = "set_accepted_token";
 const ENTRY_POINT_ADD_LISTING: &str = "add_listing";
+const ENTRY_POINT_CANCEL_LISTING: &str = "cancel_listing";
 
 // Setting runtine arguments constants
 const TOKEN_ARG: &str = "token_arg";
@@ -32,6 +35,7 @@ const COLLECTION_ARG: &str = "collection_arg";
 const TOKEN_ID_ARG: &str = "token_id_arg";
 const PAY_TOKEN_ARG: &str = "pay_token_arg";
 const PRICE_ARG: &str = "price_arg";
+const LISTING_ID_ARG: &str = "listing_id_arg";
 
 #[derive(Serialize, Deserialize)]
 pub(crate) struct MetadataStruct {
@@ -53,13 +57,14 @@ mod meta {
     }
 }
 
-fn should_deploy() -> (
+fn deploy() -> (
     WasmTestBuilder<InMemoryGlobalState>,
     ContractHash,
     ContractHash,
     ContractHash,
 ) {
     let default_account = *DEFAULT_ACCOUNT_ADDR;
+
     let mut builder = InMemoryWasmTestBuilder::default();
     builder.run_genesis(&*DEFAULT_RUN_GENESIS_REQUEST).commit();
 
@@ -96,7 +101,7 @@ fn should_deploy() -> (
             "nft_metadata_kind" => 1u8,
             "identifier_mode" => 0u8,
             "metadata_mutability" => 1u8,
-            // "nft_holder_mode" => 2u8, // FIXME: check if this works
+            "nft_holder_mode" => 2u8, // FIXME: check if this works
         },
     )
     .build();
@@ -121,8 +126,6 @@ fn should_deploy() -> (
         .expect_success()
         .commit();
 
-    // Extracts the contract hash from the named keys of the account in question, the default
-    // genesis address.
     let marketplace_contract_hash =
         get_contract_hash(&builder, default_account, "marketplace_contract_hash");
 
@@ -137,33 +140,32 @@ fn should_deploy() -> (
 }
 
 #[test]
+fn should_deploy() {
+    (_) = deploy();
+}
+
+#[test]
 fn should_add_accepted_token() {
     let (mut builder, marketplace_contract_hash, _nft_contract_hash, _erc20_contract_hash) =
-        should_deploy();
+        deploy();
     let default_account = *DEFAULT_ACCOUNT_ADDR;
     let session_code_request = ExecuteRequestBuilder::contract_call_by_hash(
-        // Again, using the default account hash included with genesis.
         default_account,
-        // Telling the execution request builder to load up an instance of a deploy built from
-        // donate.wasm.
         marketplace_contract_hash,
-        // Including the necessary runtime arguments.
         ENTRY_POINT_SET_ACCEPTED_TOKEN,
         runtime_args! {
-            TOKEN_ARG => ContractHash::new([0u8; 32]).to_formatted_string(),
+            TOKEN_ARG => ContractHash::new([1u8; 32]).to_formatted_string(),
             FEE_ARG => 10u32,
         },
     )
     .build();
 
-    // Execute this request.
     builder.exec(session_code_request).expect_success().commit();
 }
 
 #[test]
-fn should_add_sell_order() {
-    let (mut builder, marketplace_contract_hash, nft_contract_hash, erc20_contract_hash) =
-        should_deploy();
+fn should_add_and_cancel_listing() {
+    let (mut builder, marketplace_contract_hash, nft_contract_hash, erc20_contract_hash) = deploy();
     let default_account = *DEFAULT_ACCOUNT_ADDR;
 
     let nft_mint_request = ExecuteRequestBuilder::contract_call_by_hash(
@@ -171,8 +173,7 @@ fn should_add_sell_order() {
         nft_contract_hash,
         "mint",
         runtime_args! {
-            "nft_contract_hash" => nft_contract_hash,
-            "token_owner" => Key::from(default_account),
+            "token_owner" => Key::Account(default_account),
             "token_meta_data" => red_dragon(),
         },
     )
@@ -180,56 +181,151 @@ fn should_add_sell_order() {
 
     builder.exec(nft_mint_request).expect_success().commit();
 
-    // let session_code_request = ExecuteRequestBuilder::standard(
-    //     default_account,
-    //     "balance_of.wasm",
-    //     runtime_args! {
-    //         "token_owner" => default_account,
-    //         "nft_contract_hash" => Key::from(nft_contract_hash),
-    //         "key_name" => "balance_of".to_string(),
-    //     },
-    // )
-    // .build();
-    // builder.exec(session_code_request).expect_success().commit();
-    // let balance_of_marketplace = query_stored_value::<u64>(
-    //     &mut builder,
-    //     Key::from(default_account),
-    //     ["balance_of".to_string()].into(),
-    // );
+    let session_code_request = ExecuteRequestBuilder::standard(
+        default_account,
+        "balance_of.wasm",
+        runtime_args! {
+            "nft_contract_hash" => Key::from(nft_contract_hash),
+            "token_owner" => Key::Account(default_account),
+            "key_name" => "balance_of".to_string(),
+        },
+    )
+    .build();
 
-    // assert_eq!(balance_of_marketplace, 1u64);
+    builder.exec(session_code_request).expect_success().commit();
+    let balance_of = query_stored_value::<u64>(
+        &mut builder,
+        default_account.into(),
+        ["balance_of".to_string()].into(),
+    );
 
-    // let nft_approve_request = ExecuteRequestBuilder::contract_call_by_hash(
-    //     default_account,
-    //     nft_contract_hash,
-    //     "approve",
-    //     runtime_args! {
-    //         "nft_contract_hash" => nft_contract_hash,
-    //         "operator" => Key::from(marketplace_contract_hash),
-    //         "token_id" => 0u64,
-    //     },
-    // )
-    // .build();
+    assert_eq!(balance_of, 1u64);
 
-    // builder.exec(nft_approve_request).expect_success().commit();
+    let nft_approve_request = ExecuteRequestBuilder::contract_call_by_hash(
+        default_account,
+        nft_contract_hash,
+        "approve",
+        runtime_args! {
+            "nft_contract_hash" => nft_contract_hash,
+            "operator" => Key::from(marketplace_contract_hash),
+            "token_id" => 0u64,
+        },
+    )
+    .build();
 
-    // let session_code_request = ExecuteRequestBuilder::contract_call_by_hash(
-    //     // Again, using the default account hash included with genesis.
-    //     default_account,
-    //     // Telling the execution request builder to load up an instance of a deploy built from
-    //     // donate.wasm.
-    //     marketplace_contract_hash,
-    //     // Including the necessary runtime arguments.
-    //     ENTRY_POINT_ADD_LISTING,
-    //     runtime_args! {
-    //         COLLECTION_ARG => Key::Hash(nft_contract_hash.value()),
-    //         TOKEN_ID_ARG => 0u64,
-    //         PAY_TOKEN_ARG => Key::Hash(erc20_contract_hash.value()),
-    //         PRICE_ARG => U256::from(0u64),
-    //     },
-    // )
-    // .build();
+    builder.exec(nft_approve_request).expect_success().commit();
 
-    // // Execute this request.
-    // builder.exec(session_code_request).expect_success().commit();
+    let add_listing_request = ExecuteRequestBuilder::contract_call_by_hash(
+        default_account,
+        marketplace_contract_hash,
+        ENTRY_POINT_ADD_LISTING,
+        runtime_args! {
+            COLLECTION_ARG => Key::from(nft_contract_hash),
+            TOKEN_ID_ARG => 0u64,
+            PAY_TOKEN_ARG => Key::from(erc20_contract_hash),
+            PRICE_ARG => U256::from(0u64),
+        },
+    )
+    .build();
+
+    builder.exec(add_listing_request).expect_success().commit();
+
+    let cancel_listing_code_request = ExecuteRequestBuilder::contract_call_by_hash(
+        default_account,
+        marketplace_contract_hash,
+        ENTRY_POINT_CANCEL_LISTING,
+        runtime_args! {
+            LISTING_ID_ARG => 1u64,
+        },
+    )
+    .build();
+
+    builder
+        .exec(cancel_listing_code_request)
+        .expect_success()
+        .commit();
+}
+
+#[test]
+fn should_add_and_not_execute_listing() {
+    let (mut builder, marketplace_contract_hash, nft_contract_hash, erc20_contract_hash) = deploy();
+    let default_account = *DEFAULT_ACCOUNT_ADDR;
+
+    let cancel_listing_request = ExecuteRequestBuilder::contract_call_by_hash(
+        default_account,
+        marketplace_contract_hash,
+        ENTRY_POINT_CANCEL_LISTING,
+        runtime_args! {
+            LISTING_ID_ARG => 1u64,
+        },
+    )
+    .build();
+
+    builder
+        .exec(cancel_listing_request)
+        .expect_failure()
+        .commit();
+}
+/*
+let nft_transfer_request = ExecuteRequestBuilder::contract_call_by_hash(
+       default_account,
+       nft_contract_hash,
+       "transfer",
+       runtime_args! {
+           "token_id" => 0u64,
+           "target_key" => Key::from(marketplace_contract_hash),
+           "source_key" => Key::from(default_account),
+           // "nft_contract_hash" => nft_contract_hash,
+       },
+   )
+   .build();
+
+   builder.exec(nft_transfer_request).expect_success().commit();
+
+   let session_code_request = ExecuteRequestBuilder::standard(
+       default_account,
+       "balance_of.wasm",
+       runtime_args! {
+           "nft_contract_hash" => Key::from(nft_contract_hash),
+           "token_owner" => Key::from(marketplace_contract_hash),
+           "key_name" => "balance_of".to_string(),
+       },
+   )
+   .build();
+
+   builder.exec(session_code_request).expect_success().commit();
+   let balance_of = query_stored_value::<u64>(
+       &mut builder,
+       default_account.into(),
+       ["balance_of".to_string()].into(),
+   );
+
+   assert_eq!(balance_of, 1u64);
+    */
+
+fn get_dictionary_value_from_key<T: CLTyped + FromBytes>(
+    builder: &WasmTestBuilder<InMemoryGlobalState>,
+    nft_contract_key: &Key,
+    dictionary_name: &str,
+    dictionary_key: &str,
+) -> T {
+    let seed_uref = *builder
+        .query(None, *nft_contract_key, &[])
+        .expect("must have nft contract")
+        .as_contract()
+        .expect("must convert contract")
+        .named_keys()
+        .get(dictionary_name)
+        .expect("must have key")
+        .as_uref()
+        .expect("must convert to seed uref");
+
+    builder
+        .query_dictionary_item(None, seed_uref, dictionary_key)
+        .expect("should have dictionary value")
+        .as_cl_value()
+        .expect("T should be CLValue")
+        .to_owned()
+        .into_t()
+        .unwrap()
 }
