@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 extern crate alloc;
 
-use alloc::vec::Vec;
+use alloc::{string::String, vec::Vec};
 use casper_contract::contract_api::runtime;
 use casper_types::{runtime_args, ContractHash, Key, RuntimeArgs, U256};
 
@@ -58,7 +58,7 @@ impl ICEP78 {
     }
 
     pub fn transfer(&self, sender: Key, recipient: Key, token_id: TokenId) {
-        runtime::call_contract::<()>(
+        runtime::call_contract::<(String, Key)>(
             self.contract_hash,
             "transfer",
             runtime_args! {

@@ -11,7 +11,7 @@ casper-contract = {version = "1.4.4", features = ["test-support"]}
 # Types shared by many Casper crates for use on a Casper Network.
 casper-types = "1.4.6"
 casper_types_derive = "0.1.0"
-serde = { version = "1", features = ["derive", "alloc"], default-features = false }
+serde = { version = "1.0", features = ["derive"], default-features = false  }
 casper-serde-json-wasm = { git = "https://github.com/darthsiroftardis/casper-serde-json-wasm", branch = "casper-no-std"}
 hex = { version = "0.4.3", default-features = false }
 
@@ -21,7 +21,3 @@ path = "src/lib.rs"
 bench = false
 doctest = false
 test = false
-
-[profile.release]
-codegen-units = 1
-lto = true

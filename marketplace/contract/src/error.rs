@@ -6,8 +6,9 @@ pub enum MarketplaceError {
     NFTInvalidHolderMode = 1,
     InvalidContext = 2,
     NFTRequireApprove = 3,
-    NoOrderOwner = 4,
+    NoListingOwner = 4,
     ListingNotFound = 5,
+    ListingNotActive = 6,
 }
 
 impl From<MarketplaceError> for ApiError {

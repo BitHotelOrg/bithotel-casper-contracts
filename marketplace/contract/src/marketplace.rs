@@ -1,8 +1,8 @@
 use core::ops::Add;
 
 use crate::{
-    error::MarketplaceError, interfaces::icep78::ICEP78, structs::order::Listing,
-    utils::get_current_address, Dict, TokenId,
+    error::MarketplaceError, interfaces::icep78::ICEP78, utils::get_current_address, Dict, Listing,
+    Status, TokenId,
 };
 
 use alloc::{boxed::Box, collections::BTreeMap};
@@ -43,8 +43,7 @@ const LISTING_ID_ARG: &str = "listing_id_arg";
 // Creating constants for values within the contract.
 const FEE_WALLET: &str = "fee_wallet";
 const ACCEPTED_TOKENS_DICT: &str = "accepted_tokens_dict";
-const ACTIVE_LISTINGS_DICT: &str = "active_listings_dict";
-const EXECUTED_LISTINGS_DICT: &str = "executed_listings_dict";
+const LISTINGS_DICT: &str = "listings_dict";
 
 const LISTING_COUNTER: &str = "listing_counter";
 
@@ -65,8 +64,7 @@ pub extern "C" fn init() {
     let accepted_tokens = runtime::get_named_arg::<BTreeMap<String, u32>>(ACCEPTED_TOKENS_ARG);
     runtime::put_key(FEE_WALLET, fee_wallet_hash.into());
     Dict::init(ACCEPTED_TOKENS_DICT);
-    Dict::init(ACTIVE_LISTINGS_DICT);
-    Dict::init(EXECUTED_LISTINGS_DICT);
+    Dict::init(LISTINGS_DICT);
 
     let accepted_tokens_dict = Dict::instance(ACCEPTED_TOKENS_DICT);
     accepted_tokens.iter().for_each(|token| {
@@ -86,8 +84,7 @@ pub extern "C" fn set_accepted_token() {
 
 #[no_mangle]
 pub extern "C" fn add_listing() {
-    let stack = runtime::get_call_stack();
-    let marketplace_package_hash = get_current_address(
+    let marketplace_address = get_current_address(
         runtime::get_call_stack()
             .into_iter()
             .rev()
@@ -112,7 +109,7 @@ pub extern "C" fn add_listing() {
         token_id,
         pay_token,
         price,
-        status: 0u8,
+        status: Status::Added,
     };
 
     let nft = ICEP78::new(collection);
@@ -120,24 +117,22 @@ pub extern "C" fn add_listing() {
         .get_approved(caller.into(), token_id)
         .unwrap_or_revert_with(MarketplaceError::NFTRequireApprove);
 
-    // TODO: this
-    // nft.transfer(caller.into(), marketplace_package_hash.into(), token_id);
+    nft.transfer(caller.into(), marketplace_address.into(), token_id);
 
-    let active_listings = Dict::instance(ACTIVE_LISTINGS_DICT);
+    let listings = Dict::instance(LISTINGS_DICT);
     let listing_counter_uref = runtime::get_key(LISTING_COUNTER)
         .unwrap()
         .into_uref()
         .unwrap();
     let current_listing_id = storage::read::<u64>(listing_counter_uref).unwrap().unwrap();
     let next_listing_id = current_listing_id.add(1);
-    active_listings.set(&next_listing_id.to_string(), listing);
+    listings.set(&next_listing_id.to_string(), listing);
     storage::add::<u64>(listing_counter_uref, 1u64);
 }
 
 #[no_mangle]
 pub extern "C" fn cancel_listing() {
-    let stack = runtime::get_call_stack();
-    let marketplace_package_hash = get_current_address(
+    let marketplace_address = get_current_address(
         runtime::get_call_stack()
             .into_iter()
             .rev()
@@ -147,22 +142,36 @@ pub extern "C" fn cancel_listing() {
     let caller = runtime::get_caller();
     let listing_id = runtime::get_named_arg::<u64>(LISTING_ID_ARG);
 
-    runtime::print(&listing_id.to_string());
-
-    let active_listings = Dict::instance(ACTIVE_LISTINGS_DICT);
-    let listing = active_listings
+    let listings = Dict::instance(LISTINGS_DICT);
+    let mut listing = listings
         .get::<Listing>(&listing_id.to_string())
         .unwrap_or_revert_with(MarketplaceError::ListingNotFound);
 
     if listing.creator != caller.into() {
-        runtime::revert(MarketplaceError::NoOrderOwner);
+        runtime::revert(MarketplaceError::NoListingOwner);
     }
+
+    if listing.status != Status::Added {
+        runtime::revert(MarketplaceError::ListingNotActive);
+    }
+
+    listing.status = Status::Cancelled;
+
+    listings.set(&listing_id.to_string(), listing);
+
+    let nft = ICEP78::new(listing.collection);
+
+    nft.transfer(
+        marketplace_address.into(),
+        listing.creator.into(),
+        listing.token_id,
+    );
 }
 
+// FIXME: NoSuchMethod
 #[no_mangle]
 pub extern "C" fn execute_listing() {
-    let stack = runtime::get_call_stack();
-    let marketplace_package_hash = get_current_address(
+    let marketplace_address = get_current_address(
         runtime::get_call_stack()
             .into_iter()
             .rev()
@@ -178,13 +187,22 @@ pub extern "C" fn execute_listing() {
         .unwrap();
     let listing_id = runtime::get_named_arg::<u64>(LISTING_ID_ARG);
 
-    let listings = Dict::instance(ACTIVE_LISTINGS_DICT);
+    let listings = Dict::instance(LISTINGS_DICT);
 
-    let listing: Listing = listings.get::<Listing>(&listing_id.to_string()).unwrap();
+    let mut listing = listings
+        .get::<Listing>(&listing_id.to_string())
+        .unwrap_or_revert_with(MarketplaceError::ListingNotFound);
 
-    if listing.creator != caller.into() {
-        runtime::revert(MarketplaceError::NoOrderOwner);
+    if listing.status != Status::Added {
+        runtime::revert(MarketplaceError::ListingNotActive);
     }
+
+    listing.status = Status::Executed;
+    listings.set(&listing_id.to_string(), listing);
+
+    let nft = ICEP78::new(listing.collection);
+
+    nft.transfer(marketplace_address.into(), caller.into(), listing.token_id);
 }
 
 //This is the full `call` function as defined within the donation contract.
@@ -236,10 +254,14 @@ pub extern "C" fn call() {
     );
     let cancel_listing_entry_point = EntryPoint::new(
         ENTRY_POINT_CANCEL_LISTING,
-        vec![
-            Parameter::new(COLLECTION_ARG, CLType::String),
-            Parameter::new(TOKEN_ID_ARG, CLType::U256),
-        ],
+        vec![Parameter::new(LISTING_ID_ARG, CLType::U64)],
+        CLType::URef,
+        EntryPointAccess::Public,
+        EntryPointType::Contract,
+    );
+    let execute_listing_entry_point = EntryPoint::new(
+        ENTRY_POINT_EXECUTE_LISTING,
+        vec![Parameter::new(LISTING_ID_ARG, CLType::U64)],
         CLType::URef,
         EntryPointAccess::Public,
         EntryPointType::Contract,
@@ -249,6 +271,7 @@ pub extern "C" fn call() {
     entry_points.add_entry_point(set_accepted_token_entry_point);
     entry_points.add_entry_point(add_listing_entry_point);
     entry_points.add_entry_point(cancel_listing_entry_point);
+    entry_points.add_entry_point(execute_listing_entry_point);
 
     let listing_count_start = storage::new_uref(0u64);
 

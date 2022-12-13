@@ -9,7 +9,10 @@ mod marketplace;
 mod structs;
 mod utils;
 use casper_types::ContractHash;
-use structs::dict::Dict;
+use structs::{
+    dict::Dict,
+    order::{Listing, Status},
+};
 pub type Time = u64;
 pub type TokenId = u64;
 pub type Token = (ContractHash, TokenId);
