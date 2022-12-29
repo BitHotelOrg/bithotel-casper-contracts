@@ -3,6 +3,7 @@
 members = [
     "marketplace/contract",
     "marketplace/tests",
+    "marketplace/client/execute_listing_session",
     "cep78/contract",
     "cep78/tests",
     "cep78/client/balance_of_session",

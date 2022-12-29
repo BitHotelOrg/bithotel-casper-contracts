@@ -12,7 +12,7 @@ pub(crate) const ENTRY_POINT_ADD_LISTING: &str = "add_listing";
 pub(crate) const ENTRY_POINT_CANCEL_LISTING: &str = "cancel_listing";
 pub(crate) const ENTRY_POINT_EXECUTE_LISTING: &str = "execute_listing";
 
-// Setting runtine arguments constants
+// Setting runtime arguments constants
 pub(crate) const TOKEN_ARG: &str = "token_arg";
 pub(crate) const FEE_ARG: &str = "fee_arg";
 pub(crate) const COLLECTION_ARG: &str = "collection_arg";
@@ -20,3 +20,5 @@ pub(crate) const TOKEN_ID_ARG: &str = "token_id_arg";
 pub(crate) const PAY_TOKEN_ARG: &str = "pay_token_arg";
 pub(crate) const PRICE_ARG: &str = "price_arg";
 pub(crate) const LISTING_ID_ARG: &str = "listing_id_arg";
+
+pub(crate) const USER_ACCOUNT_0: [u8; 32] = [1u8; 32];

@@ -3,11 +3,14 @@ prepare:
 
 build-contract:
 	cd contract && cargo build --release --target wasm32-unknown-unknown
-	wasm-strip contract/target/wasm32-unknown-unknown/release/contract.wasm 2>/dev/null | true
+	cd client/execute_listing_session && cargo build --release --target wasm32-unknown-unknown
+	wasm-strip ../target/wasm32-unknown-unknown/release/marketplace_contract.wasm 2>/dev/null | true
+	wasm-strip client/execute_listing_session/target/wasm32-unknown-unknown/release/execute_listing_call.wasm 2>/dev/null | true
 
 test: build-contract
 	mkdir -p tests/wasm
-	cp target/wasm32-unknown-unknown/release/contract.wasm tests/wasm/marketplace.wasm
+	cp ../target/wasm32-unknown-unknown/release/marketplace_contract.wasm tests/wasm/marketplace.wasm
+	cp ../target/wasm32-unknown-unknown/release/execute_listing_call.wasm tests/wasm/execute_listing_call.wasm
 	cd tests && cargo test
 
 clippy:

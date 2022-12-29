@@ -9,6 +9,7 @@ pub enum MarketplaceError {
     NoListingOwner = 4,
     ListingNotFound = 5,
     ListingNotActive = 6,
+    ListingOwnerCannotBuy = 7,
 }
 
 impl From<MarketplaceError> for ApiError {

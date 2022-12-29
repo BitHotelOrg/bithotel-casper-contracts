@@ -1,8 +1,8 @@
 use core::ops::Add;
 
 use crate::{
-    error::MarketplaceError, interfaces::icep78::ICEP78, utils::get_current_address, Dict, Listing,
-    Status, TokenId,
+    enums::Address, error::MarketplaceError, interfaces::icep78::ICEP78,
+    utils::get_current_address, Dict, Listing, Status, TokenId,
 };
 
 use alloc::{boxed::Box, collections::BTreeMap};
@@ -12,13 +12,13 @@ use alloc::{
     vec,
 };
 use casper_contract::{
-    contract_api::{runtime, storage},
+    contract_api::{runtime, storage, account, system},
     unwrap_or_revert::UnwrapOrRevert,
 };
 // Importing specific Casper types.
 use casper_types::{
     contracts::NamedKeys, runtime_args, CLType, ContractHash, EntryPoint, EntryPointAccess,
-    EntryPointType, EntryPoints, Key, Parameter, RuntimeArgs, U256,
+    EntryPointType, EntryPoints, Key, Parameter, RuntimeArgs, U256, URef,
 };
 
 // Creating constants for the various contract entry points.
@@ -29,7 +29,7 @@ const ENTRY_POINT_CANCEL_LISTING: &str = "cancel_listing";
 const ENTRY_POINT_EXECUTE_LISTING: &str = "execute_listing";
 
 // Creating constants for the entry point arguments.
-const CONTRACT_NAME_ARG: &str = "contract_name_arg";
+// const CONTRACT_NAME_ARG: &str = "contract_name_arg";
 const FEE_WALLET_ARG: &str = "fee_wallet_arg";
 const ACCEPTED_TOKENS_ARG: &str = "accepted_tokens_arg";
 const TOKEN_ARG: &str = "token_arg";
@@ -55,7 +55,6 @@ const LISTING_COUNTER: &str = "listing_counter";
 // This entry point initializes the marketplace, setting up the fee wallet
 // and creating a dictionary to track the accepted tokens.
 
-// keys to intergers
 // runtime to store things?
 
 #[no_mangle]
@@ -104,7 +103,7 @@ pub extern "C" fn add_listing() {
         .unwrap();
 
     let listing = Listing {
-        creator: caller.into(),
+        owner: caller,
         collection,
         token_id,
         pay_token,
@@ -113,8 +112,7 @@ pub extern "C" fn add_listing() {
     };
 
     let nft = ICEP78::new(collection);
-    let approved = nft
-        .get_approved(caller.into(), token_id)
+    nft.get_approved(caller.into(), token_id)
         .unwrap_or_revert_with(MarketplaceError::NFTRequireApprove);
 
     nft.transfer(caller.into(), marketplace_address.into(), token_id);
@@ -147,7 +145,7 @@ pub extern "C" fn cancel_listing() {
         .get::<Listing>(&listing_id.to_string())
         .unwrap_or_revert_with(MarketplaceError::ListingNotFound);
 
-    if listing.creator != caller.into() {
+    if listing.owner != caller.into() {
         runtime::revert(MarketplaceError::NoListingOwner);
     }
 
@@ -163,12 +161,11 @@ pub extern "C" fn cancel_listing() {
 
     nft.transfer(
         marketplace_address.into(),
-        listing.creator.into(),
+        listing.owner.into(),
         listing.token_id,
     );
 }
 
-// FIXME: NoSuchMethod
 #[no_mangle]
 pub extern "C" fn execute_listing() {
     let marketplace_address = get_current_address(
@@ -180,11 +177,6 @@ pub extern "C" fn execute_listing() {
     );
 
     let caller = runtime::get_caller();
-
-    let collection = runtime::get_named_arg::<Key>(COLLECTION_ARG)
-        .into_hash()
-        .map(|hash| ContractHash::new(hash))
-        .unwrap();
     let listing_id = runtime::get_named_arg::<u64>(LISTING_ID_ARG);
 
     let listings = Dict::instance(LISTINGS_DICT);
@@ -195,6 +187,10 @@ pub extern "C" fn execute_listing() {
 
     if listing.status != Status::Added {
         runtime::revert(MarketplaceError::ListingNotActive);
+    }
+
+    if listing.owner == caller {
+        runtime::revert(MarketplaceError::ListingOwnerCannotBuy);
     }
 
     listing.status = Status::Executed;
@@ -266,12 +262,20 @@ pub extern "C" fn call() {
         EntryPointAccess::Public,
         EntryPointType::Contract,
     );
+    let get_listing_entry_point = EntryPoint::new(
+        "get_listing",
+        vec![Parameter::new(LISTING_ID_ARG, CLType::U64)],
+        CLType::URef,
+        EntryPointAccess::Public,
+        EntryPointType::Contract,
+    );
     let mut entry_points = EntryPoints::new();
     entry_points.add_entry_point(init_entry_point);
     entry_points.add_entry_point(set_accepted_token_entry_point);
     entry_points.add_entry_point(add_listing_entry_point);
     entry_points.add_entry_point(cancel_listing_entry_point);
     entry_points.add_entry_point(execute_listing_entry_point);
+    entry_points.add_entry_point(get_listing_entry_point);
 
     let listing_count_start = storage::new_uref(0u64);
 
