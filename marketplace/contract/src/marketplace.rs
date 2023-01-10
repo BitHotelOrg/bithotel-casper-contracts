@@ -4,21 +4,25 @@ use crate::{
     enums::Address, error::MarketplaceError, interfaces::icep78::ICEP78,
     utils::get_current_address, Dict, Listing, Status, TokenId,
 };
-
 use alloc::{boxed::Box, collections::BTreeMap};
+use casper_types::{CLValue, URef};
 // Importing Rust types.
 use alloc::{
     string::{String, ToString},
     vec,
 };
 use casper_contract::{
-    contract_api::{runtime, storage, account, system},
+    contract_api::{
+        account, runtime,
+        storage::{self, new_uref},
+        system,
+    },
     unwrap_or_revert::UnwrapOrRevert,
 };
 // Importing specific Casper types.
 use casper_types::{
     contracts::NamedKeys, runtime_args, CLType, ContractHash, EntryPoint, EntryPointAccess,
-    EntryPointType, EntryPoints, Key, Parameter, RuntimeArgs, U256, URef,
+    EntryPointType, EntryPoints, Key, Parameter, RuntimeArgs, U256,
 };
 
 // Creating constants for the various contract entry points.
@@ -27,6 +31,7 @@ const ENTRY_POINT_SET_ACCEPTED_TOKEN: &str = "set_accepted_token";
 const ENTRY_POINT_ADD_LISTING: &str = "add_listing";
 const ENTRY_POINT_CANCEL_LISTING: &str = "cancel_listing";
 const ENTRY_POINT_EXECUTE_LISTING: &str = "execute_listing";
+const ENTRY_POINT_GET_LISTING: &str = "get_listing";
 
 // Creating constants for the entry point arguments.
 // const CONTRACT_NAME_ARG: &str = "contract_name_arg";
@@ -201,6 +206,16 @@ pub extern "C" fn execute_listing() {
     nft.transfer(marketplace_address.into(), caller.into(), listing.token_id);
 }
 
+#[no_mangle]
+pub extern "C" fn get_listing() {
+    let listing_id = runtime::get_named_arg::<u64>(LISTING_ID_ARG);
+    let listings = Dict::instance(LISTINGS_DICT);
+    let listing = listings
+        .get::<Listing>(&listing_id.to_string())
+        .unwrap_or_revert_with(MarketplaceError::ListingNotFound);
+    runtime::ret(CLValue::from_t(listing.owner).unwrap());
+}
+
 //This is the full `call` function as defined within the donation contract.
 #[no_mangle]
 pub extern "C" fn call() {
@@ -263,7 +278,7 @@ pub extern "C" fn call() {
         EntryPointType::Contract,
     );
     let get_listing_entry_point = EntryPoint::new(
-        "get_listing",
+        ENTRY_POINT_GET_LISTING,
         vec![Parameter::new(LISTING_ID_ARG, CLType::U64)],
         CLType::URef,
         EntryPointAccess::Public,

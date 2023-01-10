@@ -5,7 +5,9 @@ use crate::utility::constants::{
 };
 use casper_engine_test_support::{ExecuteRequestBuilder, WasmTestBuilder, DEFAULT_ACCOUNT_ADDR};
 use casper_execution_engine::storage::global_state::in_memory::InMemoryGlobalState;
-use casper_types::{account::AccountHash, runtime_args, ContractHash, Key, RuntimeArgs, U256, U512};
+use casper_types::{
+    account::AccountHash, runtime_args, ContractHash, Key, RuntimeArgs, U256, U512,
+};
 
 #[derive(Clone, Copy)]
 pub struct MarketplaceInstance {
@@ -129,23 +131,27 @@ impl<'a> MarketplaceInstance {
         builder.commit();
     }
 
-    pub fn get_account(self, builder: &mut WasmTestBuilder<InMemoryGlobalState>,
-        sender: AccountHash) -> U512 {
-            let request = ExecuteRequestBuilder::standard(
-                sender,
-                "execute_listing_call.wasm",
-                runtime_args! {
-                    "marketplace_contract_hash" => Key::from(self.contract_hash),
-                    "listing_id" => 1u64,
-                    "amount" => U512::from(10u64),
-                }
-            )
-            .build();
-    
-            let proposer_reward_starting_balance = builder.get_proposer_purse_balance();
+    // WIP
+    pub fn buy_listing(
+        self,
+        builder: &mut WasmTestBuilder<InMemoryGlobalState>,
+        sender: AccountHash,
+    ) -> U512 {
+        let request = ExecuteRequestBuilder::standard(
+            sender,
+            "execute_listing_call.wasm",
+            runtime_args! {
+                "marketplace_contract_hash" => Key::from(self.contract_hash),
+                "listing_id" => 1u64,
+                "amount" => U512::from(10u64),
+            },
+        )
+        .build();
 
-            builder.exec(request).expect_success().commit();
+        let proposer_reward_starting_balance = builder.get_proposer_purse_balance();
 
-            builder.get_proposer_purse_balance() - proposer_reward_starting_balance
-        }
+        builder.exec(request).expect_success().commit();
+
+        builder.get_proposer_purse_balance() - proposer_reward_starting_balance
+    }
 }

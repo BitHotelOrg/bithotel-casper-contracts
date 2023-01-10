@@ -1,11 +1,6 @@
 // extern crate alloc;
 use std::collections::BTreeMap;
 // Outlining aspects of the Casper test support crate to include.
-use casper_engine_test_support::{
-    ExecuteRequestBuilder, InMemoryWasmTestBuilder, WasmTestBuilder, DEFAULT_ACCOUNT_ADDR,
-    DEFAULT_RUN_GENESIS_REQUEST,
-};
-use casper_execution_engine::{storage::global_state::in_memory::InMemoryGlobalState, core::{engine_state::balance, validate_balance_proof}};
 use crate::utility::{
     constants::{
         ACCEPTED_TOKENS_ARG, CEP78, ENTRY_POINT_CANCEL_LISTING, ERC20, FEE_WALLET_ARG,
@@ -14,11 +9,22 @@ use crate::utility::{
     helpers::{get_contract_hash, nft_get_balance, query_stored_value},
     marketplace_interface::MarketplaceInstance,
 };
+use casper_engine_test_support::{
+    ExecuteRequestBuilder, InMemoryWasmTestBuilder, WasmTestBuilder, DEFAULT_ACCOUNT_ADDR,
+    DEFAULT_RUN_GENESIS_REQUEST,
+};
+use casper_execution_engine::{
+    core::{engine_state::balance, validate_balance_proof},
+    storage::global_state::in_memory::InMemoryGlobalState,
+};
 // Custom Casper types that will be used within this test.
 use self::meta::metadata_0;
 use casper_types::{
-    account::{AccountHash, Account}, bytesrepr::FromBytes, runtime_args, system::{mint, self}, CLTyped, ContractHash,
-    Key, PublicKey, RuntimeArgs, SecretKey, U256, system::handle_payment::MintProvider
+    account::{Account, AccountHash},
+    bytesrepr::FromBytes,
+    runtime_args,
+    system::{self, handle_payment::MintProvider, mint},
+    CLTyped, ContractHash, Key, PublicKey, RuntimeArgs, SecretKey, U256,
 };
 use serde::{Deserialize, Serialize};
 
@@ -400,12 +406,33 @@ fn get_account() {
     let marketplace = MarketplaceInstance {
         contract_hash: marketplace_contract_hash,
     };
-    let default_account = builder.get_account(*DEFAULT_ACCOUNT_ADDR).unwrap();
-    
+    let price = 10u64;
+    marketplace.add_listing(
+        &mut builder,
+        *DEFAULT_ACCOUNT_ADDR,
+        nft_contract_hash,
+        0u64,
+        erc20_contract_hash,
+        U256::from(price),
+        true,
+    );
+    let fund_account_request = ExecuteRequestBuilder::transfer(
+        *DEFAULT_ACCOUNT_ADDR,
+        runtime_args! {
+            mint::ARG_AMOUNT => 100_000_000_000_000u64,
+            mint::ARG_TARGET => get_account_0(),
+            mint::ARG_ID => Option::<u64>::None,
+        },
+    )
+    .build();
+
+    builder.exec(fund_account_request).expect_success().commit();
+    let default_account = builder.get_account(get_account_0()).unwrap();
+
     let balance_before = builder.get_purse_balance(default_account.main_purse());
-    let fee = marketplace.get_account(&mut builder, default_account.account_hash());
+    let fee = marketplace.buy_listing(&mut builder, get_account_0());
     let balance_after = builder.get_purse_balance(default_account.main_purse());
-    assert_eq!(balance_before, balance_after + fee + 1);
+    assert_eq!(balance_before, balance_after + fee + price);
 }
 
 fn get_dictionary_value_from_key<T: CLTyped + FromBytes>(
