@@ -2,10 +2,7 @@
 use std::collections::BTreeMap;
 // Outlining aspects of the Casper test support crate to include.
 use crate::utility::{
-    constants::{
-        ACCEPTED_TOKENS_ARG, CEP78, ENTRY_POINT_CANCEL_LISTING, ERC20, FEE_WALLET_ARG,
-        LISTING_ID_ARG, MARKETPLACE, USER_ACCOUNT_0,
-    },
+    constants::{ARG_ACCEPTED_TOKENS, ARG_FEE_WALLET, CEP78, ERC20, MARKETPLACE, USER_ACCOUNT_0},
     helpers::{get_contract_hash, nft_get_balance, query_stored_value},
     marketplace_interface::MarketplaceInstance,
 };
@@ -13,18 +10,12 @@ use casper_engine_test_support::{
     ExecuteRequestBuilder, InMemoryWasmTestBuilder, WasmTestBuilder, DEFAULT_ACCOUNT_ADDR,
     DEFAULT_RUN_GENESIS_REQUEST,
 };
-use casper_execution_engine::{
-    core::{engine_state::balance, validate_balance_proof},
-    storage::global_state::in_memory::InMemoryGlobalState,
-};
+use casper_execution_engine::storage::global_state::in_memory::InMemoryGlobalState;
 // Custom Casper types that will be used within this test.
 use self::meta::metadata_0;
 use casper_types::{
-    account::{Account, AccountHash},
-    bytesrepr::FromBytes,
-    runtime_args,
-    system::{self, handle_payment::MintProvider, mint},
-    CLTyped, ContractHash, Key, PublicKey, RuntimeArgs, SecretKey, U256,
+    account::AccountHash, bytesrepr::FromBytes, runtime_args, CLTyped, ContractHash, Key,
+    PublicKey, RuntimeArgs, SecretKey, U256,
 };
 use serde::{Deserialize, Serialize};
 
@@ -48,12 +39,12 @@ mod meta {
     }
 }
 
-fn get_account_0() -> AccountHash {
+pub fn get_account_0() -> AccountHash {
     let secret_key = SecretKey::ed25519_from_bytes(USER_ACCOUNT_0).unwrap();
     PublicKey::from(&secret_key).to_account_hash()
 }
 
-fn deploy() -> (
+pub fn deploy() -> (
     WasmTestBuilder<InMemoryGlobalState>,
     ContractHash,
     ContractHash,
@@ -73,8 +64,8 @@ fn deploy() -> (
         default_account,
         MARKETPLACE,
         runtime_args! {
-            FEE_WALLET_ARG => Key::from(default_account),
-            ACCEPTED_TOKENS_ARG => accepted_tokens,
+            ARG_FEE_WALLET => Key::from(default_account),
+            ARG_ACCEPTED_TOKENS => accepted_tokens,
         },
     )
     .build();
@@ -135,7 +126,7 @@ fn deploy() -> (
     )
 }
 
-fn mint_nft(
+pub fn mint_nft(
     builder: &mut WasmTestBuilder<InMemoryGlobalState>,
     nft_contract_hash: ContractHash,
 ) -> () {
@@ -174,7 +165,7 @@ fn mint_nft(
     assert_eq!(balance_of, 1u64);
 }
 
-fn approve_nft(
+pub fn approve_nft(
     builder: &mut WasmTestBuilder<InMemoryGlobalState>,
     nft_contract_hash: ContractHash,
     operator: Key,
@@ -210,7 +201,7 @@ fn should_deploy_with_nft_and_approve() {
     (_) = deploy_with_nft(true);
 }
 
-fn deploy_with_nft(
+pub fn deploy_with_nft(
     approve_marketplace: bool,
 ) -> (
     WasmTestBuilder<InMemoryGlobalState>,
@@ -228,6 +219,14 @@ fn deploy_with_nft(
             0u64,
         );
     }
+
+    let balance_of_account = nft_get_balance(
+        &mut builder,
+        *DEFAULT_ACCOUNT_ADDR,
+        nft_contract_hash,
+        Key::from(*DEFAULT_ACCOUNT_ADDR),
+    );
+    assert_eq!(balance_of_account, 1u64);
     (
         builder,
         marketplace_contract_hash,
@@ -251,190 +250,7 @@ fn should_add_accepted_token() {
     );
 }
 
-#[test]
-fn should_add_and_cancel_listing() {
-    let (mut builder, marketplace_contract_hash, nft_contract_hash, erc20_contract_hash) =
-        deploy_with_nft(true);
-
-    let mut balance_of_account = nft_get_balance(
-        &mut builder,
-        *DEFAULT_ACCOUNT_ADDR,
-        nft_contract_hash,
-        Key::from(*DEFAULT_ACCOUNT_ADDR),
-    );
-    assert_eq!(balance_of_account, 1u64);
-
-    let marketplace = MarketplaceInstance {
-        contract_hash: marketplace_contract_hash,
-    };
-    marketplace.add_listing(
-        &mut builder,
-        *DEFAULT_ACCOUNT_ADDR,
-        nft_contract_hash,
-        0u64,
-        erc20_contract_hash,
-        U256::from(100u64),
-        true,
-    );
-
-    marketplace.cancel_listing(&mut builder, *DEFAULT_ACCOUNT_ADDR, 1u64, true);
-
-    balance_of_account = nft_get_balance(
-        &mut builder,
-        *DEFAULT_ACCOUNT_ADDR,
-        nft_contract_hash,
-        Key::from(*DEFAULT_ACCOUNT_ADDR),
-    );
-    assert_eq!(balance_of_account, 1u64);
-}
-
-#[test]
-fn should_not_cancel_listing() {
-    let (mut builder, marketplace_contract_hash, nft_contract_hash, erc20_contract_hash) =
-        deploy_with_nft(true);
-
-    let marketplace = MarketplaceInstance::new(marketplace_contract_hash);
-
-    marketplace.cancel_listing(&mut builder, *DEFAULT_ACCOUNT_ADDR, 1u64, false);
-}
-
-#[test]
-fn should_not_execute_listing() {
-    let (mut builder, marketplace_contract_hash, nft_contract_hash, erc20_contract_hash) =
-        deploy_with_nft(true);
-
-    let marketplace = MarketplaceInstance::new(marketplace_contract_hash);
-
-    marketplace.execute_listing(&mut builder, *DEFAULT_ACCOUNT_ADDR, 1u64, false);
-}
-
-#[test]
-fn should_not_add_and_execute_listing() {
-    let (mut builder, marketplace_contract_hash, nft_contract_hash, erc20_contract_hash) =
-        deploy_with_nft(true);
-
-    let marketplace = MarketplaceInstance {
-        contract_hash: marketplace_contract_hash,
-    };
-
-    marketplace.add_listing(
-        &mut builder,
-        *DEFAULT_ACCOUNT_ADDR,
-        nft_contract_hash,
-        0u64,
-        erc20_contract_hash,
-        U256::from(100u64),
-        true,
-    );
-
-    let mut balance = nft_get_balance(
-        &mut builder,
-        *DEFAULT_ACCOUNT_ADDR,
-        nft_contract_hash,
-        Key::from(*DEFAULT_ACCOUNT_ADDR),
-    );
-
-    assert_eq!(balance, 0);
-
-    marketplace.execute_listing(&mut builder, *DEFAULT_ACCOUNT_ADDR, 1u64, false);
-
-    balance = nft_get_balance(
-        &mut builder,
-        *DEFAULT_ACCOUNT_ADDR,
-        nft_contract_hash,
-        Key::from(*DEFAULT_ACCOUNT_ADDR),
-    );
-
-    assert_eq!(balance, 0);
-}
-
-#[test]
-fn should_execute_listing() {
-    let (mut builder, marketplace_contract_hash, nft_contract_hash, erc20_contract_hash) =
-        deploy_with_nft(true);
-
-    let marketplace = MarketplaceInstance {
-        contract_hash: marketplace_contract_hash,
-    };
-
-    marketplace.add_listing(
-        &mut builder,
-        *DEFAULT_ACCOUNT_ADDR,
-        nft_contract_hash,
-        0u64,
-        erc20_contract_hash,
-        U256::from(100i32),
-        true,
-    );
-
-    let fund_account_request = ExecuteRequestBuilder::transfer(
-        *DEFAULT_ACCOUNT_ADDR,
-        runtime_args! {
-            mint::ARG_AMOUNT => 100_000_000_000_000u64,
-            mint::ARG_TARGET => get_account_0(),
-            mint::ARG_ID => Option::<u64>::None,
-        },
-    )
-    .build();
-
-    builder.exec(fund_account_request).expect_success().commit();
-
-    marketplace.execute_listing(&mut builder, get_account_0(), 1u64, true);
-
-    let balance_buyer = nft_get_balance(
-        &mut builder,
-        get_account_0(),
-        nft_contract_hash,
-        get_account_0().into(),
-    );
-
-    let balance_seller = nft_get_balance(
-        &mut builder,
-        *DEFAULT_ACCOUNT_ADDR,
-        nft_contract_hash,
-        Key::from(*DEFAULT_ACCOUNT_ADDR),
-    );
-
-    assert_eq!(balance_buyer, 1);
-    assert_eq!(balance_seller, 0);
-}
-
-#[test]
-fn get_account() {
-    let (mut builder, marketplace_contract_hash, nft_contract_hash, erc20_contract_hash) =
-        deploy_with_nft(true);
-    let marketplace = MarketplaceInstance {
-        contract_hash: marketplace_contract_hash,
-    };
-    let price = 10u64;
-    marketplace.add_listing(
-        &mut builder,
-        *DEFAULT_ACCOUNT_ADDR,
-        nft_contract_hash,
-        0u64,
-        erc20_contract_hash,
-        U256::from(price),
-        true,
-    );
-    let fund_account_request = ExecuteRequestBuilder::transfer(
-        *DEFAULT_ACCOUNT_ADDR,
-        runtime_args! {
-            mint::ARG_AMOUNT => 100_000_000_000_000u64,
-            mint::ARG_TARGET => get_account_0(),
-            mint::ARG_ID => Option::<u64>::None,
-        },
-    )
-    .build();
-
-    builder.exec(fund_account_request).expect_success().commit();
-    let default_account = builder.get_account(get_account_0()).unwrap();
-
-    let balance_before = builder.get_purse_balance(default_account.main_purse());
-    let fee = marketplace.buy_listing(&mut builder, get_account_0());
-    let balance_after = builder.get_purse_balance(default_account.main_purse());
-    assert_eq!(balance_before, balance_after + fee + price);
-}
-
+#[warn(dead_code)]
 fn get_dictionary_value_from_key<T: CLTyped + FromBytes>(
     builder: &WasmTestBuilder<InMemoryGlobalState>,
     nft_contract_key: &Key,

@@ -22,7 +22,7 @@ use casper_contract::{
 // Importing specific Casper types.
 use casper_types::{
     contracts::NamedKeys, runtime_args, CLType, ContractHash, EntryPoint, EntryPointAccess,
-    EntryPointType, EntryPoints, Key, Parameter, RuntimeArgs, U256,
+    EntryPointType, EntryPoints, Key, Parameter, RuntimeArgs, U256, U512,
 };
 
 // Creating constants for the various contract entry points.
@@ -32,18 +32,20 @@ const ENTRY_POINT_ADD_LISTING: &str = "add_listing";
 const ENTRY_POINT_CANCEL_LISTING: &str = "cancel_listing";
 const ENTRY_POINT_EXECUTE_LISTING: &str = "execute_listing";
 const ENTRY_POINT_GET_LISTING: &str = "get_listing";
+const ENTRY_POINT_GET_LISTING_STATUS: &str = "get_listing_status";
 
 // Creating constants for the entry point arguments.
 // const CONTRACT_NAME_ARG: &str = "contract_name_arg";
-const FEE_WALLET_ARG: &str = "fee_wallet_arg";
-const ACCEPTED_TOKENS_ARG: &str = "accepted_tokens_arg";
-const TOKEN_ARG: &str = "token_arg";
-const FEE_ARG: &str = "fee_arg";
-const COLLECTION_ARG: &str = "collection_arg";
-const TOKEN_ID_ARG: &str = "token_id_arg";
-const PAY_TOKEN_ARG: &str = "pay_token_arg";
-const PRICE_ARG: &str = "price_arg";
-const LISTING_ID_ARG: &str = "listing_id_arg";
+const FEE_WALLET_ARG: &str = "fee_wallet";
+const ACCEPTED_TOKENS_ARG: &str = "accepted_tokens";
+const TOKEN_ARG: &str = "token";
+const FEE_ARG: &str = "fee";
+const COLLECTION_ARG: &str = "collection";
+const TOKEN_ID_ARG: &str = "token_id";
+const PAY_TOKEN_ARG: &str = "pay_token";
+const PRICE_ARG: &str = "price";
+const LISTING_ID_ARG: &str = "listing_id";
+const PURSE_ARG: &str = "purse";
 
 // Creating constants for values within the contract.
 const FEE_WALLET: &str = "fee_wallet";
@@ -183,6 +185,7 @@ pub extern "C" fn execute_listing() {
 
     let caller = runtime::get_caller();
     let listing_id = runtime::get_named_arg::<u64>(LISTING_ID_ARG);
+    let caller_purse = runtime::get_named_arg::<URef>(PURSE_ARG);
 
     let listings = Dict::instance(LISTINGS_DICT);
 
@@ -202,6 +205,14 @@ pub extern "C" fn execute_listing() {
     listings.set(&listing_id.to_string(), listing);
 
     let nft = ICEP78::new(listing.collection);
+
+    system::transfer_from_purse_to_account(
+        caller_purse,
+        listing.owner,
+        U512::from(listing.price.as_u64()),
+        None,
+    )
+    .unwrap();
 
     nft.transfer(marketplace_address.into(), caller.into(), listing.token_id);
 }
@@ -272,7 +283,10 @@ pub extern "C" fn call() {
     );
     let execute_listing_entry_point = EntryPoint::new(
         ENTRY_POINT_EXECUTE_LISTING,
-        vec![Parameter::new(LISTING_ID_ARG, CLType::U64)],
+        vec![
+            Parameter::new(LISTING_ID_ARG, CLType::U64),
+            Parameter::new(PURSE_ARG, CLType::URef),
+        ],
         CLType::URef,
         EntryPointAccess::Public,
         EntryPointType::Contract,

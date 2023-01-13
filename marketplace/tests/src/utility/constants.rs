@@ -1,5 +1,5 @@
-pub(crate) const FEE_WALLET_ARG: &str = "fee_wallet_arg";
-pub(crate) const ACCEPTED_TOKENS_ARG: &str = "accepted_tokens_arg";
+pub(crate) const ARG_FEE_WALLET: &str = "fee_wallet";
+pub(crate) const ARG_ACCEPTED_TOKENS: &str = "accepted_tokens";
 
 // Calling the contract deploy.
 pub(crate) const MARKETPLACE: &str = "marketplace.wasm";
@@ -13,12 +13,13 @@ pub(crate) const ENTRY_POINT_CANCEL_LISTING: &str = "cancel_listing";
 pub(crate) const ENTRY_POINT_EXECUTE_LISTING: &str = "execute_listing";
 
 // Setting runtime arguments constants
-pub(crate) const TOKEN_ARG: &str = "token_arg";
-pub(crate) const FEE_ARG: &str = "fee_arg";
-pub(crate) const COLLECTION_ARG: &str = "collection_arg";
-pub(crate) const TOKEN_ID_ARG: &str = "token_id_arg";
-pub(crate) const PAY_TOKEN_ARG: &str = "pay_token_arg";
-pub(crate) const PRICE_ARG: &str = "price_arg";
-pub(crate) const LISTING_ID_ARG: &str = "listing_id_arg";
+pub(crate) const ARG_TOKEN: &str = "token";
+pub(crate) const ARG_FEE: &str = "fee";
+pub(crate) const ARG_COLLECTION: &str = "collection";
+pub(crate) const ARG_TOKEN_ID: &str = "token_id";
+pub(crate) const ARG_PAY_TOKEN: &str = "pay_token";
+pub(crate) const ARG_PRICE: &str = "price";
+pub(crate) const ARG_LISTING_ID: &str = "listing_id";
+pub(crate) const ARG_MARKETPLACE_HASH: &str = "marketplace_contract_hash";
 
 pub(crate) const USER_ACCOUNT_0: [u8; 32] = [1u8; 32];
