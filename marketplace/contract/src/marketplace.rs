@@ -27,7 +27,6 @@ use casper_types::{
 
 // Creating constants for the various contract entry points.
 const ENTRY_POINT_INIT: &str = "init";
-const ENTRY_POINT_SET_ACCEPTED_TOKEN: &str = "set_accepted_token";
 const ENTRY_POINT_ADD_LISTING: &str = "add_listing";
 const ENTRY_POINT_CANCEL_LISTING: &str = "cancel_listing";
 const ENTRY_POINT_EXECUTE_LISTING: &str = "execute_listing";
@@ -37,7 +36,6 @@ const ENTRY_POINT_GET_LISTING_STATUS: &str = "get_listing_status";
 // Creating constants for the entry point arguments.
 // const CONTRACT_NAME_ARG: &str = "contract_name_arg";
 const FEE_WALLET_ARG: &str = "fee_wallet";
-const ACCEPTED_TOKENS_ARG: &str = "accepted_tokens";
 const TOKEN_ARG: &str = "token";
 const FEE_ARG: &str = "fee";
 const COLLECTION_ARG: &str = "collection";
@@ -49,43 +47,14 @@ const PURSE_ARG: &str = "purse";
 
 // Creating constants for values within the contract.
 const FEE_WALLET: &str = "fee_wallet";
-const ACCEPTED_TOKENS_DICT: &str = "accepted_tokens_dict";
 const LISTINGS_DICT: &str = "listings_dict";
-
 const LISTING_COUNTER: &str = "listing_counter";
-
-// Creating constants for the Urefs
-// const ACCEPTED_TOKENS_UREF: &str = "accepted_tokens_uref";
-// const SELL_ORDERS_UREF: &str = "added_listings_uref";
-// const EXECUTED_ORDERS_UREF: &str = "executed_orders_uref";
-
-// This entry point initializes the marketplace, setting up the fee wallet
-// and creating a dictionary to track the accepted tokens.
-
-// runtime to store things?
 
 #[no_mangle]
 pub extern "C" fn init() {
     let fee_wallet_hash = runtime::get_named_arg::<Key>(FEE_WALLET_ARG);
-    let accepted_tokens = runtime::get_named_arg::<BTreeMap<String, u32>>(ACCEPTED_TOKENS_ARG);
     runtime::put_key(FEE_WALLET, fee_wallet_hash.into());
-    Dict::init(ACCEPTED_TOKENS_DICT);
     Dict::init(LISTINGS_DICT);
-
-    let accepted_tokens_dict = Dict::instance(ACCEPTED_TOKENS_DICT);
-    accepted_tokens.iter().for_each(|token| {
-        let contract_hash = ContractHash::from_formatted_str(token.0).unwrap();
-        accepted_tokens_dict.set(&contract_hash.to_string(), *token.1)
-    });
-}
-
-#[no_mangle]
-pub extern "C" fn set_accepted_token() {
-    let contract_hash =
-        ContractHash::from_formatted_str(&runtime::get_named_arg::<String>(TOKEN_ARG)).unwrap();
-    let token_fee = runtime::get_named_arg::<u32>(FEE_ARG);
-    let accepted_tokens_dict = Dict::instance(ACCEPTED_TOKENS_DICT);
-    accepted_tokens_dict.set(&contract_hash.to_string(), token_fee)
 }
 
 #[no_mangle]
@@ -235,37 +204,16 @@ pub extern "C" fn get_listing() {
 #[no_mangle]
 pub extern "C" fn call() {
     // let contract_name: String = runtime::get_named_arg(CONTRACT_NAME_ARG);
-    let accepted_tokens: BTreeMap<String, u32> = runtime::get_named_arg(ACCEPTED_TOKENS_ARG);
     let fee_wallet: Key = runtime::get_named_arg(FEE_WALLET_ARG);
     // This establishes the `init` entry point for initializing the contract's infrastructure.
     let init_entry_point = EntryPoint::new(
         ENTRY_POINT_INIT,
-        vec![
-            Parameter::new(FEE_WALLET_ARG, CLType::Key),
-            Parameter::new(
-                ACCEPTED_TOKENS_ARG,
-                CLType::Map {
-                    key: Box::new(CLType::String),
-                    value: Box::new(CLType::U32),
-                },
-            ),
-        ],
+        vec![Parameter::new(FEE_WALLET_ARG, CLType::Key)],
         CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Contract,
     );
 
-    // This establishes the `donate` entry point for callers looking to donate.
-    let set_accepted_token_entry_point = EntryPoint::new(
-        ENTRY_POINT_SET_ACCEPTED_TOKEN,
-        vec![
-            Parameter::new(TOKEN_ARG, CLType::String),
-            Parameter::new(FEE_ARG, CLType::U32),
-        ],
-        CLType::URef,
-        EntryPointAccess::Public,
-        EntryPointType::Contract,
-    );
     let add_listing_entry_point = EntryPoint::new(
         ENTRY_POINT_ADD_LISTING,
         vec![
@@ -304,7 +252,6 @@ pub extern "C" fn call() {
     );
     let mut entry_points = EntryPoints::new();
     entry_points.add_entry_point(init_entry_point);
-    entry_points.add_entry_point(set_accepted_token_entry_point);
     entry_points.add_entry_point(add_listing_entry_point);
     entry_points.add_entry_point(cancel_listing_entry_point);
     entry_points.add_entry_point(execute_listing_entry_point);
@@ -331,7 +278,6 @@ pub extern "C" fn call() {
         ENTRY_POINT_INIT,
         runtime_args! {
             FEE_WALLET_ARG => fee_wallet,
-            ACCEPTED_TOKENS_ARG => accepted_tokens,
         },
     )
 }

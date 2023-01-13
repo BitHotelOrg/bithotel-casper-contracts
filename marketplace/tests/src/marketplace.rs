@@ -2,7 +2,7 @@
 use std::collections::BTreeMap;
 // Outlining aspects of the Casper test support crate to include.
 use crate::utility::{
-    constants::{ARG_ACCEPTED_TOKENS, ARG_FEE_WALLET, CEP78, ERC20, MARKETPLACE, USER_ACCOUNT_0},
+    constants::{ARG_FEE_WALLET, CEP78, ERC20, MARKETPLACE, USER_ACCOUNT_0},
     helpers::{get_contract_hash, nft_get_balance, query_stored_value},
     marketplace_interface::MarketplaceInstance,
 };
@@ -55,17 +55,11 @@ pub fn deploy() -> (
     let mut builder = InMemoryWasmTestBuilder::default();
     builder.run_genesis(&*DEFAULT_RUN_GENESIS_REQUEST).commit();
 
-    let mut accepted_tokens: BTreeMap<String, u32> = BTreeMap::new();
-    let null_contract_hash = ContractHash::new([0u8; 32]);
-    let price = 1000u32;
-    accepted_tokens.insert(null_contract_hash.to_formatted_string(), price);
-
     let contract_creation_request = ExecuteRequestBuilder::standard(
         default_account,
         MARKETPLACE,
         runtime_args! {
             ARG_FEE_WALLET => Key::from(default_account),
-            ARG_ACCEPTED_TOKENS => accepted_tokens,
         },
     )
     .build();
@@ -233,21 +227,6 @@ pub fn deploy_with_nft(
         nft_contract_hash,
         erc20_contract_hash,
     )
-}
-
-#[test]
-fn should_add_accepted_token() {
-    let (mut builder, marketplace_contract_hash, _nft_contract_hash, _erc20_contract_hash) =
-        deploy();
-
-    let marketplace = MarketplaceInstance::new(marketplace_contract_hash);
-    marketplace.add_accepted_token(
-        &mut builder,
-        *DEFAULT_ACCOUNT_ADDR,
-        _erc20_contract_hash,
-        20u32,
-        true,
-    );
 }
 
 #[warn(dead_code)]

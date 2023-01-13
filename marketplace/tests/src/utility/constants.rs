@@ -7,7 +7,6 @@ pub(crate) const CEP78: &str = "cep78.wasm";
 pub(crate) const ERC20: &str = "erc20.wasm";
 
 // Setting entry points constants
-pub(crate) const ENTRY_POINT_SET_ACCEPTED_TOKEN: &str = "set_accepted_token";
 pub(crate) const ENTRY_POINT_ADD_LISTING: &str = "add_listing";
 pub(crate) const ENTRY_POINT_CANCEL_LISTING: &str = "cancel_listing";
 pub(crate) const ENTRY_POINT_EXECUTE_LISTING: &str = "execute_listing";
