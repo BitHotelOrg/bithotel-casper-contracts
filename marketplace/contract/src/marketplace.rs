@@ -109,6 +109,10 @@ pub extern "C" fn add_listing() {
         .map(|hash| ContractHash::new(hash))
         .unwrap();
 
+    if price == U256::from(0u64) {
+        runtime::revert(MarketplaceError::ListingPriceIsZero);
+    }
+
     let listing = Listing {
         owner: caller,
         collection,

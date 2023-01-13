@@ -6,77 +6,6 @@ use casper_engine_test_support::{ExecuteRequestBuilder, DEFAULT_ACCOUNT_ADDR};
 use casper_types::{runtime_args, system::mint, Key, RuntimeArgs, U256, U512};
 
 /**
- * execute listing
- * should fail because there is no listing
- */
-#[test]
-fn should_not_execute_listing() {
-    let (mut builder, marketplace_contract_hash, _nft_contract_hash, _erc20_contract_hash) =
-        deploy_with_nft(true);
-
-    let marketplace = MarketplaceInstance::new(marketplace_contract_hash);
-
-    marketplace.execute_listing(
-        &mut builder,
-        *DEFAULT_ACCOUNT_ADDR,
-        1u64,
-        U512::from(10u64),
-        false,
-    );
-}
-
-/**
- * add listing
- * execute listing
- * should fail because listing owner cannot buy own listing
- */
-#[test]
-fn should_add_and_not_execute_listing() {
-    let (mut builder, marketplace_contract_hash, nft_contract_hash, erc20_contract_hash) =
-        deploy_with_nft(true);
-
-    let marketplace = MarketplaceInstance {
-        contract_hash: marketplace_contract_hash,
-    };
-
-    marketplace.add_listing(
-        &mut builder,
-        *DEFAULT_ACCOUNT_ADDR,
-        nft_contract_hash,
-        0u64,
-        erc20_contract_hash,
-        U256::from(100u64),
-        true,
-    );
-
-    let mut balance = nft_get_balance(
-        &mut builder,
-        *DEFAULT_ACCOUNT_ADDR,
-        nft_contract_hash,
-        Key::from(*DEFAULT_ACCOUNT_ADDR),
-    );
-
-    assert_eq!(balance, 0);
-
-    marketplace.execute_listing(
-        &mut builder,
-        *DEFAULT_ACCOUNT_ADDR,
-        1u64,
-        U512::from(10u64),
-        false,
-    );
-
-    balance = nft_get_balance(
-        &mut builder,
-        *DEFAULT_ACCOUNT_ADDR,
-        nft_contract_hash,
-        Key::from(*DEFAULT_ACCOUNT_ADDR),
-    );
-
-    assert_eq!(balance, 0);
-}
-
-/**
  * add listing
  * transfer funds to buyer's purse
  * execute listing
@@ -138,13 +67,84 @@ fn should_execute_listing() {
 }
 
 /**
+ * execute listing
+ * should fail because there is no listing
+ */
+#[test]
+fn should_not_execute_listing_0() {
+    let (mut builder, marketplace_contract_hash, _nft_contract_hash, _erc20_contract_hash) =
+        deploy_with_nft(true);
+
+    let marketplace = MarketplaceInstance::new(marketplace_contract_hash);
+
+    marketplace.execute_listing(
+        &mut builder,
+        *DEFAULT_ACCOUNT_ADDR,
+        1u64,
+        U512::from(10u64),
+        false,
+    );
+}
+
+/**
+ * add listing
+ * execute listing
+ * should fail because listing owner cannot buy own listing
+ */
+#[test]
+fn should_not_execute_listing_1() {
+    let (mut builder, marketplace_contract_hash, nft_contract_hash, erc20_contract_hash) =
+        deploy_with_nft(true);
+
+    let marketplace = MarketplaceInstance {
+        contract_hash: marketplace_contract_hash,
+    };
+
+    marketplace.add_listing(
+        &mut builder,
+        *DEFAULT_ACCOUNT_ADDR,
+        nft_contract_hash,
+        0u64,
+        erc20_contract_hash,
+        U256::from(100u64),
+        true,
+    );
+
+    let mut balance = nft_get_balance(
+        &mut builder,
+        *DEFAULT_ACCOUNT_ADDR,
+        nft_contract_hash,
+        Key::from(*DEFAULT_ACCOUNT_ADDR),
+    );
+
+    assert_eq!(balance, 0);
+
+    marketplace.execute_listing(
+        &mut builder,
+        *DEFAULT_ACCOUNT_ADDR,
+        1u64,
+        U512::from(10u64),
+        false,
+    );
+
+    balance = nft_get_balance(
+        &mut builder,
+        *DEFAULT_ACCOUNT_ADDR,
+        nft_contract_hash,
+        Key::from(*DEFAULT_ACCOUNT_ADDR),
+    );
+
+    assert_eq!(balance, 0);
+}
+
+/**
  * add listing
  * transfer too little funds to buyer's purse
  * execute listing, should fail due to insufficient balance
  * asset seller balance, should be unaffected
  */
 #[test]
-fn should_not_execute_listing_no_funds() {
+fn should_not_execute_listing_2() {
     let (mut builder, marketplace_contract_hash, nft_contract_hash, erc20_contract_hash) =
         deploy_with_nft(true);
     let marketplace = MarketplaceInstance {
