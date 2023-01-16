@@ -14,10 +14,12 @@ test: build-contract
 	cd tests && cargo test
 
 clippy:
+	cd client && cargo clippy --all-targets -- -D warnings
 	cd contract && cargo clippy --all-targets -- -D warnings
 	cd tests && cargo clippy --all-targets -- -D warnings
 
 check-lint: clippy
+	cd client && cargo fmt -- --check
 	cd contract && cargo fmt -- --check
 	cd tests && cargo fmt -- --check
 
