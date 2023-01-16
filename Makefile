@@ -3,7 +3,8 @@ test:
 	cd marketplace && make test
 
 prepare:
-	rustup target add wasm32-unknown-unknown
+	cd cep78 && rustup target add wasm32-unknown-unknown
+	cd marketplace && rustup target add wasm32-unknown-unknown
 
 check-lint:
 	cd cep78 && make check-lint

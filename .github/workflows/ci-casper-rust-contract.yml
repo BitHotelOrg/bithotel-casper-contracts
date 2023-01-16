@@ -22,10 +22,6 @@ jobs:
           components: rustfmt, clippy
           override: true
       - run: make prepare
-      - name: Run cargo check
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
       # Needed for gcc install
       - run: sudo apt update && sudo apt install -y build-essential
       - uses: Swatinem/rust-cache@v1
