@@ -1,3 +1,13 @@
+PINNED_TOOLCHAIN := $(shell cat rust-toolchain)
+
+prepare:
+	cd cep78 && rustup target add wasm32-unknown-unknown && \
+		rustup component add clippy --toolchain ${PINNED_TOOLCHAIN} && \
+		rustup component add rustfmt --toolchain ${PINNED_TOOLCHAIN}
+	cd marketplace && rustup target add wasm32-unknown-unknown && \
+		rustup component add clippy --toolchain ${PINNED_TOOLCHAIN} && \
+		rustup component add rustfmt --toolchain ${PINNED_TOOLCHAIN}
+
 test:
 	cd cep78 && make test
 	cd marketplace && make test
