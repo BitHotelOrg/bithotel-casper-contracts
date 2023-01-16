@@ -21,6 +21,7 @@ jobs:
           toolchain: nightly
           components: rustfmt, clippy
           override: true
+      - run: make prepare
       - name: Run cargo check
         uses: actions-rs/cargo@v1
         with:
@@ -28,7 +29,6 @@ jobs:
       # Needed for gcc install
       - run: sudo apt update && sudo apt install -y build-essential
       - uses: Swatinem/rust-cache@v1
-      - run: make prepare
       - name: "Check linting"
         run: make check-lint
       # Tests will be added after NCTL interaction is possible.
