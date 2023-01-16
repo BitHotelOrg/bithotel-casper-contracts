@@ -6,11 +6,16 @@ compile_error!("target arch should be wasm32: compile with '--target wasm32-unkn
 
 extern crate alloc;
 
-use alloc::{vec,string::{String, ToString}};
+use alloc::{
+    string::{String, ToString},
+    vec,
+};
 
 use casper_contract::contract_api::{runtime, storage};
-use casper_types::{CLType, ContractHash, ContractVersion, EntryPoint, EntryPointAccess, EntryPoints, EntryPointType, Key, Parameter, runtime_args, RuntimeArgs};
-use casper_types::contracts::NamedKeys;
+use casper_types::{
+    contracts::NamedKeys, runtime_args, CLType, ContractHash, ContractVersion, EntryPoint,
+    EntryPointAccess, EntryPointType, EntryPoints, Key, Parameter, RuntimeArgs,
+};
 
 const CONTRACT_NAME: &str = "minting_contract_hash";
 const CONTRACT_VERSION: &str = "minting_contract_version";
@@ -29,7 +34,6 @@ const ARG_TARGET_KEY: &str = "target_key";
 const ARG_SOURCE_KEY: &str = "source_key";
 const ARG_TOKEN_ID: &str = "token_id";
 
-
 #[no_mangle]
 pub extern "C" fn mint() {
     let nft_contract_hash: ContractHash = runtime::get_named_arg::<Key>(ARG_NFT_CONTRACT_HASH)
@@ -40,14 +44,15 @@ pub extern "C" fn mint() {
     let token_owner = runtime::get_named_arg::<Key>(ARG_TOKEN_OWNER);
     let token_metadata: String = runtime::get_named_arg(ARG_TOKEN_META_DATA);
 
-    let (collection_name, owned_tokens_dictionary_key,_token_id_string ) = runtime::call_contract::<(String, Key, String)>(
-        nft_contract_hash,
-        ENTRY_POINT_MINT,
-        runtime_args! {
-            ARG_TOKEN_OWNER => token_owner,
-            ARG_TOKEN_META_DATA => token_metadata,
-        },
-    );
+    let (collection_name, owned_tokens_dictionary_key, _token_id_string) =
+        runtime::call_contract::<(String, Key, String)>(
+            nft_contract_hash,
+            ENTRY_POINT_MINT,
+            runtime_args! {
+                ARG_TOKEN_OWNER => token_owner,
+                ARG_TOKEN_META_DATA => token_metadata,
+            },
+        );
 
     runtime::put_key(&collection_name, owned_tokens_dictionary_key)
 }
@@ -70,7 +75,7 @@ pub extern "C" fn transfer() {
             ARG_TOKEN_ID => token_id,
             ARG_SOURCE_KEY => from_token_owner,
             ARG_TARGET_KEY => target_token_owner
-        }
+        },
     );
 
     runtime::put_key(&collection_name, owned_tokens_dictionary_key)
@@ -90,10 +95,9 @@ pub extern "C" fn burn() {
         ENTRY_POINT_BURN,
         runtime_args! {
             ARG_TOKEN_ID => token_id
-        }
+        },
     )
 }
-
 
 fn install_minting_contract() -> (ContractHash, ContractVersion) {
     let mint_entry_point = EntryPoint::new(
@@ -104,7 +108,7 @@ fn install_minting_contract() -> (ContractHash, ContractVersion) {
             Parameter::new(ARG_TOKEN_META_DATA, CLType::String),
         ],
         CLType::Unit,
-            EntryPointAccess::Public,
+        EntryPointAccess::Public,
         EntryPointType::Session,
     );
 
@@ -127,7 +131,6 @@ fn install_minting_contract() -> (ContractHash, ContractVersion) {
         EntryPointAccess::Public,
         EntryPointType::Contract,
     );
-
 
     let mut entry_points = EntryPoints::new();
     entry_points.add_entry_point(mint_entry_point);
@@ -156,4 +159,3 @@ pub extern "C" fn call() {
     runtime::put_key(CONTRACT_NAME, contract_hash.into());
     runtime::put_key(CONTRACT_VERSION, storage::new_uref(contract_version).into());
 }
-

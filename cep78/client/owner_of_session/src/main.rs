@@ -31,16 +31,18 @@ pub extern "C" fn call() {
             nft_contract_hash,
             ENTRY_POINT_OWNER_OF,
             runtime_args! {
-            ARG_TOKEN_HASH => token_hash,
-        },)
+                ARG_TOKEN_HASH => token_hash,
+            },
+        )
     } else {
         let token_id = runtime::get_named_arg::<u64>(ARG_TOKEN_ID);
         runtime::call_contract::<Key>(
             nft_contract_hash,
             ENTRY_POINT_OWNER_OF,
             runtime_args! {
-            ARG_TOKEN_ID => token_id,
-        },)
+                ARG_TOKEN_ID => token_id,
+            },
+        )
     };
     runtime::put_key(&key_name, storage::new_uref(owner).into());
 }
