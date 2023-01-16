@@ -19,7 +19,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          components: rustfmt, clippy
+          components: rustfmt, clippy, cargo-clippy
       # Needed for gcc install
       - run: sudo apt update && sudo apt install -y build-essential
       - uses: Swatinem/rust-cache@v1
