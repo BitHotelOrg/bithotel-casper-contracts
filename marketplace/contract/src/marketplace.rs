@@ -1,10 +1,9 @@
 use core::ops::Add;
 
 use crate::{
-    enums::Address, error::MarketplaceError, interfaces::icep78::ICEP78,
-    utils::get_current_address, Dict, Listing, Status, TokenId,
+    error::MarketplaceError, interfaces::icep78::ICEP78, utils::get_current_address, Dict, Listing,
+    Status, TokenId,
 };
-use alloc::{boxed::Box, collections::BTreeMap};
 use casper_types::{CLValue, URef};
 // Importing Rust types.
 use alloc::{
@@ -12,11 +11,7 @@ use alloc::{
     vec,
 };
 use casper_contract::{
-    contract_api::{
-        account, runtime,
-        storage::{self, new_uref},
-        system,
-    },
+    contract_api::{runtime, storage, system},
     unwrap_or_revert::UnwrapOrRevert,
 };
 // Importing specific Casper types.
@@ -31,13 +26,11 @@ const ENTRY_POINT_ADD_LISTING: &str = "add_listing";
 const ENTRY_POINT_CANCEL_LISTING: &str = "cancel_listing";
 const ENTRY_POINT_EXECUTE_LISTING: &str = "execute_listing";
 const ENTRY_POINT_GET_LISTING: &str = "get_listing";
-const ENTRY_POINT_GET_LISTING_STATUS: &str = "get_listing_status";
 
 // Creating constants for the entry point arguments.
 // const CONTRACT_NAME_ARG: &str = "contract_name_arg";
 const FEE_WALLET_ARG: &str = "fee_wallet";
-const TOKEN_ARG: &str = "token";
-const FEE_ARG: &str = "fee";
+// const FEE_ARG: &str = "fee";
 const COLLECTION_ARG: &str = "collection";
 const TOKEN_ID_ARG: &str = "token_id";
 const PAY_TOKEN_ARG: &str = "pay_token";
@@ -53,7 +46,7 @@ const LISTING_COUNTER: &str = "listing_counter";
 #[no_mangle]
 pub extern "C" fn init() {
     let fee_wallet_hash = runtime::get_named_arg::<Key>(FEE_WALLET_ARG);
-    runtime::put_key(FEE_WALLET, fee_wallet_hash.into());
+    runtime::put_key(FEE_WALLET, fee_wallet_hash);
     Dict::init(LISTINGS_DICT);
 }
 
@@ -69,13 +62,13 @@ pub extern "C" fn add_listing() {
     let caller = runtime::get_caller();
     let collection = runtime::get_named_arg::<Key>(COLLECTION_ARG)
         .into_hash()
-        .map(|hash| ContractHash::new(hash))
+        .map(ContractHash::new)
         .unwrap();
     let token_id: TokenId = runtime::get_named_arg(TOKEN_ID_ARG);
     let price: U256 = runtime::get_named_arg(PRICE_ARG);
     let pay_token = runtime::get_named_arg::<Key>(PAY_TOKEN_ARG)
         .into_hash()
-        .map(|hash| ContractHash::new(hash))
+        .map(ContractHash::new)
         .unwrap();
 
     if price == U256::from(0u64) {
@@ -125,7 +118,7 @@ pub extern "C" fn cancel_listing() {
         .get::<Listing>(&listing_id.to_string())
         .unwrap_or_revert_with(MarketplaceError::ListingNotFound);
 
-    if listing.owner != caller.into() {
+    if listing.owner != caller {
         runtime::revert(MarketplaceError::NoListingOwner);
     }
 
