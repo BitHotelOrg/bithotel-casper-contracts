@@ -1,16 +1,16 @@
 [package]
-name = "execute_listing"
+name = "execute_listing_call"
 version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-casper-contract = {version = "1.4.4", features = ["test-support"]}
+casper-contract = {version = "1.4.3", features = ["test-support"]}
 casper-types = "1.4.6"
 casper_types_derive = "0.1.0"
 
 [[bin]]
 name = "execute_listing_call"
-path = "src/lib.rs"
+path = "src/main.rs"
 bench = false
 doctest = false
 test = false
