@@ -14,8 +14,7 @@ use casper_types::{runtime_args, system::mint, Key, RuntimeArgs, U256, U512};
  */
 #[test]
 fn should_execute_listing() {
-    let (mut builder, marketplace_contract_hash, nft_contract_hash, erc20_contract_hash) =
-        deploy_with_nft(true);
+    let (mut builder, marketplace_contract_hash, nft_contract_hash) = deploy_with_nft(true);
     let marketplace = MarketplaceInstance {
         contract_hash: marketplace_contract_hash,
     };
@@ -25,7 +24,6 @@ fn should_execute_listing() {
         *DEFAULT_ACCOUNT_ADDR,
         nft_contract_hash,
         0u64,
-        erc20_contract_hash,
         U256::from(price),
         true,
     );
@@ -72,8 +70,7 @@ fn should_execute_listing() {
  */
 #[test]
 fn should_not_execute_listing_0() {
-    let (mut builder, marketplace_contract_hash, _nft_contract_hash, _erc20_contract_hash) =
-        deploy_with_nft(true);
+    let (mut builder, marketplace_contract_hash, _nft_contract_hash) = deploy_with_nft(true);
 
     let marketplace = MarketplaceInstance::new(marketplace_contract_hash);
 
@@ -93,8 +90,7 @@ fn should_not_execute_listing_0() {
  */
 #[test]
 fn should_not_execute_listing_1() {
-    let (mut builder, marketplace_contract_hash, nft_contract_hash, erc20_contract_hash) =
-        deploy_with_nft(true);
+    let (mut builder, marketplace_contract_hash, nft_contract_hash) = deploy_with_nft(true);
 
     let marketplace = MarketplaceInstance {
         contract_hash: marketplace_contract_hash,
@@ -105,7 +101,6 @@ fn should_not_execute_listing_1() {
         *DEFAULT_ACCOUNT_ADDR,
         nft_contract_hash,
         0u64,
-        erc20_contract_hash,
         U256::from(100u64),
         true,
     );
@@ -145,8 +140,7 @@ fn should_not_execute_listing_1() {
  */
 #[test]
 fn should_not_execute_listing_2() {
-    let (mut builder, marketplace_contract_hash, nft_contract_hash, erc20_contract_hash) =
-        deploy_with_nft(true);
+    let (mut builder, marketplace_contract_hash, nft_contract_hash) = deploy_with_nft(true);
     let marketplace = MarketplaceInstance {
         contract_hash: marketplace_contract_hash,
     };
@@ -156,7 +150,6 @@ fn should_not_execute_listing_2() {
         *DEFAULT_ACCOUNT_ADDR,
         nft_contract_hash,
         0u64,
-        erc20_contract_hash,
         U256::from(price),
         true,
     );

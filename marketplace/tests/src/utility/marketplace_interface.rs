@@ -29,7 +29,6 @@ impl<'a> MarketplaceInstance {
         sender: AccountHash,
         collection: ContractHash,
         token_id: u64,
-        pay_token: ContractHash,
         price: U256,
         should_succeed: bool,
     ) {
@@ -40,7 +39,6 @@ impl<'a> MarketplaceInstance {
             runtime_args! {
                 ARG_COLLECTION => Key::from(collection),
                 ARG_TOKEN_ID => token_id,
-                ARG_PAY_TOKEN => Key::from(pay_token),
                 ARG_PRICE => price,
             },
         )

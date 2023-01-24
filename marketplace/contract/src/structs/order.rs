@@ -14,7 +14,6 @@ pub struct Listing {
     pub owner: AccountHash,
     pub collection: ContractHash,
     pub token_id: TokenId,
-    pub pay_token: ContractHash,
     pub price: U256,
     pub status: Status,
 }

@@ -33,7 +33,6 @@ const FEE_WALLET_ARG: &str = "fee_wallet";
 // const FEE_ARG: &str = "fee";
 const COLLECTION_ARG: &str = "collection";
 const TOKEN_ID_ARG: &str = "token_id";
-const PAY_TOKEN_ARG: &str = "pay_token";
 const PRICE_ARG: &str = "price";
 const LISTING_ID_ARG: &str = "listing_id";
 const PURSE_ARG: &str = "purse";
@@ -66,10 +65,6 @@ pub extern "C" fn add_listing() {
         .unwrap();
     let token_id: TokenId = runtime::get_named_arg(TOKEN_ID_ARG);
     let price: U256 = runtime::get_named_arg(PRICE_ARG);
-    let pay_token = runtime::get_named_arg::<Key>(PAY_TOKEN_ARG)
-        .into_hash()
-        .map(ContractHash::new)
-        .unwrap();
 
     if price == U256::from(0u64) {
         runtime::revert(MarketplaceError::ListingPriceIsZero);
@@ -79,7 +74,6 @@ pub extern "C" fn add_listing() {
         owner: caller,
         collection,
         token_id,
-        pay_token,
         price,
         status: Status::Added,
     };
@@ -212,7 +206,6 @@ pub extern "C" fn call() {
         vec![
             Parameter::new(COLLECTION_ARG, CLType::String),
             Parameter::new(TOKEN_ID_ARG, CLType::U256),
-            Parameter::new(PAY_TOKEN_ARG, CLType::String),
             Parameter::new(PRICE_ARG, CLType::U256),
         ],
         CLType::URef,

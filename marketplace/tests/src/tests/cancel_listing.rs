@@ -13,8 +13,7 @@ use crate::{
  */
 #[test]
 fn should_add_and_cancel_listing() {
-    let (mut builder, marketplace_contract_hash, nft_contract_hash, erc20_contract_hash) =
-        deploy_with_nft(true);
+    let (mut builder, marketplace_contract_hash, nft_contract_hash) = deploy_with_nft(true);
 
     let marketplace = MarketplaceInstance::new(marketplace_contract_hash);
     marketplace.add_listing(
@@ -22,7 +21,6 @@ fn should_add_and_cancel_listing() {
         *DEFAULT_ACCOUNT_ADDR,
         nft_contract_hash,
         0u64,
-        erc20_contract_hash,
         U256::from(100u64),
         true,
     );
@@ -44,8 +42,7 @@ fn should_add_and_cancel_listing() {
  */
 #[test]
 fn should_not_cancel_listing() {
-    let (mut builder, marketplace_contract_hash, _nft_contract_hash, _erc20_contract_hash) =
-        deploy_with_nft(true);
+    let (mut builder, marketplace_contract_hash, _nft_contract_hash) = deploy_with_nft(true);
 
     let marketplace = MarketplaceInstance::new(marketplace_contract_hash);
 

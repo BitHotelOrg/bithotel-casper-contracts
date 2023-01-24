@@ -9,8 +9,7 @@ use crate::{marketplace::deploy_with_nft, utility::marketplace_interface::Market
  */
 #[test]
 fn should_add_listing() {
-    let (mut builder, marketplace_contract_hash, nft_contract_hash, erc20_contract_hash) =
-        deploy_with_nft(true);
+    let (mut builder, marketplace_contract_hash, nft_contract_hash) = deploy_with_nft(true);
 
     let marketplace = MarketplaceInstance::new(marketplace_contract_hash);
     marketplace.add_listing(
@@ -18,7 +17,6 @@ fn should_add_listing() {
         *DEFAULT_ACCOUNT_ADDR,
         nft_contract_hash,
         0u64,
-        erc20_contract_hash,
         U256::from(10u64),
         true,
     );
@@ -30,8 +28,7 @@ fn should_add_listing() {
  */
 #[test]
 fn should_not_add_listing_0() {
-    let (mut builder, marketplace_contract_hash, nft_contract_hash, erc20_contract_hash) =
-        deploy_with_nft(true);
+    let (mut builder, marketplace_contract_hash, nft_contract_hash) = deploy_with_nft(true);
 
     let marketplace = MarketplaceInstance::new(marketplace_contract_hash);
     marketplace.add_listing(
@@ -39,7 +36,6 @@ fn should_not_add_listing_0() {
         *DEFAULT_ACCOUNT_ADDR,
         nft_contract_hash,
         5u64,
-        erc20_contract_hash,
         U256::from(10u64),
         false,
     );
@@ -51,8 +47,7 @@ fn should_not_add_listing_0() {
  */
 #[test]
 fn should_not_add_listing_1() {
-    let (mut builder, marketplace_contract_hash, nft_contract_hash, erc20_contract_hash) =
-        deploy_with_nft(true);
+    let (mut builder, marketplace_contract_hash, nft_contract_hash) = deploy_with_nft(true);
 
     let marketplace = MarketplaceInstance::new(marketplace_contract_hash);
     marketplace.add_listing(
@@ -60,7 +55,6 @@ fn should_not_add_listing_1() {
         *DEFAULT_ACCOUNT_ADDR,
         nft_contract_hash,
         0u64,
-        erc20_contract_hash,
         U256::from(0u64),
         false,
     );

@@ -2,7 +2,7 @@
 use std::collections::BTreeMap;
 // Outlining aspects of the Casper test support crate to include.
 use crate::utility::{
-    constants::{ARG_FEE_WALLET, CEP78, ERC20, MARKETPLACE, USER_ACCOUNT_0},
+    constants::{ARG_FEE_WALLET, CEP78, MARKETPLACE, USER_ACCOUNT_0},
     helpers::{get_contract_hash, nft_get_balance, query_stored_value},
     marketplace_interface::MarketplaceInstance,
 };
@@ -48,7 +48,6 @@ pub fn deploy() -> (
     WasmTestBuilder<InMemoryGlobalState>,
     ContractHash,
     ContractHash,
-    ContractHash,
 ) {
     let default_account = *DEFAULT_ACCOUNT_ADDR;
 
@@ -91,33 +90,11 @@ pub fn deploy() -> (
         .expect_success()
         .commit();
 
-    let contract_creation_request = ExecuteRequestBuilder::standard(
-        default_account,
-        ERC20,
-        runtime_args! {
-            "name" => "BTH",
-            "symbol" => "BTH",
-            "decimals" => 9u8,
-            "total_supply" => U256::from(10_000u64).checked_mul(U256::exp10(9)).unwrap(),
-        },
-    )
-    .build();
-    builder
-        .exec(contract_creation_request)
-        .expect_success()
-        .commit();
-
     let marketplace_contract_hash =
         get_contract_hash(&builder, default_account, "marketplace_contract_hash");
 
     let nft_contract_hash = get_contract_hash(&builder, default_account, "nft_contract");
-    let erc20_contract_hash = get_contract_hash(&builder, default_account, "erc20_token_contract");
-    (
-        builder,
-        marketplace_contract_hash,
-        nft_contract_hash,
-        erc20_contract_hash,
-    )
+    (builder, marketplace_contract_hash, nft_contract_hash)
 }
 
 pub fn mint_nft(
@@ -201,9 +178,8 @@ pub fn deploy_with_nft(
     WasmTestBuilder<InMemoryGlobalState>,
     ContractHash,
     ContractHash,
-    ContractHash,
 ) {
-    let (mut builder, marketplace_contract_hash, nft_contract_hash, erc20_contract_hash) = deploy();
+    let (mut builder, marketplace_contract_hash, nft_contract_hash) = deploy();
     mint_nft(&mut builder, nft_contract_hash);
     if approve_marketplace {
         approve_nft(
@@ -221,12 +197,7 @@ pub fn deploy_with_nft(
         Key::from(*DEFAULT_ACCOUNT_ADDR),
     );
     assert_eq!(balance_of_account, 1u64);
-    (
-        builder,
-        marketplace_contract_hash,
-        nft_contract_hash,
-        erc20_contract_hash,
-    )
+    (builder, marketplace_contract_hash, nft_contract_hash)
 }
 
 #[warn(dead_code)]
