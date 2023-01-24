@@ -6,7 +6,7 @@ build-contract:
 	cd client/get_approved_session && cargo build --release --target wasm32-unknown-unknown
 	cd client/minting_contract && cargo build --release --target wasm32-unknown-unknown
 	cd client/transfer_session && cargo build --release --target wasm32-unknown-unknown
-	wasm-strip contract/target/wasm32-unknown-unknown/release/contract.wasm 2>/dev/null | true
+	wasm-strip contract/target/wasm32-unknown-unknown/release/cep78.wasm 2>/dev/null | true
 	wasm-strip entrypoint_session/target/wasm32-unknown-unknown/release/entrypoint_call.wasm 2>/dev/null | true
 	wasm-strip client/mint_session/target/wasm32-unknown-unknown/release/mint_call.wasm 2>/dev/null | true
 	wasm-strip client/balance_of_session/target/wasm32-unknown-unknown/release/balance_of_call.wasm 2>/dev/null | true
@@ -17,7 +17,7 @@ build-contract:
 
 test: build-contract
 	mkdir -p tests/wasm
-	cp contract/target/wasm32-unknown-unknown/release/contract.wasm tests/wasm
+	cp ../target/wasm32-unknown-unknown/release/cep78.wasm tests/wasm
 	cp client/mint_session/target/wasm32-unknown-unknown/release/mint_call.wasm tests/wasm
 	cp client/balance_of_session/target/wasm32-unknown-unknown/release/balance_of_call.wasm tests/wasm
 	cp client/owner_of_session/target/wasm32-unknown-unknown/release/owner_of_call.wasm tests/wasm

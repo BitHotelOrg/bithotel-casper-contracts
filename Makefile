@@ -8,7 +8,7 @@ prepare:
 		rustup component add clippy --toolchain ${PINNED_TOOLCHAIN} && \
 		rustup component add rustfmt --toolchain ${PINNED_TOOLCHAIN}
 
-test:
+test: build-contract
 	cd cep78 && make test
 	cd marketplace && make test
 
