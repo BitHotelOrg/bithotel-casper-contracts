@@ -15,12 +15,19 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
+
+      - name: Get nightly toolchain from file
+        id: nightly-toolchain
+        run: echo "::set-output name=version::$(cat resources/rust-toolchain.in)"
+
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: ${{ steps.nightly-toolchain.outputs.version }}
+          profile: minimal
           components: rustfmt, clippy
-          override: true
+          target: wasm32-unknown-unknown
+
       - run: make prepare
       # Needed for gcc install
       - run: sudo apt update && sudo apt install -y build-essential
