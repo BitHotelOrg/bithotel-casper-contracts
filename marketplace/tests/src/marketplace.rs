@@ -1,10 +1,7 @@
-// extern crate alloc;
-use std::collections::BTreeMap;
 // Outlining aspects of the Casper test support crate to include.
 use crate::utility::{
     constants::{ARG_FEE_WALLET, CEP78, MARKETPLACE, USER_ACCOUNT_0},
     helpers::{get_contract_hash, nft_get_balance, query_stored_value},
-    marketplace_interface::MarketplaceInstance,
 };
 use casper_engine_test_support::{
     ExecuteRequestBuilder, InMemoryWasmTestBuilder, WasmTestBuilder, DEFAULT_ACCOUNT_ADDR,
@@ -14,8 +11,7 @@ use casper_execution_engine::storage::global_state::in_memory::InMemoryGlobalSta
 // Custom Casper types that will be used within this test.
 use self::meta::metadata_0;
 use casper_types::{
-    account::AccountHash, bytesrepr::FromBytes, runtime_args, CLTyped, ContractHash, Key,
-    PublicKey, RuntimeArgs, SecretKey, U256,
+    account::AccountHash, runtime_args, ContractHash, Key, PublicKey, RuntimeArgs, SecretKey,
 };
 use serde::{Deserialize, Serialize};
 
@@ -100,7 +96,7 @@ pub fn deploy() -> (
 pub fn mint_nft(
     builder: &mut WasmTestBuilder<InMemoryGlobalState>,
     nft_contract_hash: ContractHash,
-) -> () {
+) {
     let default_account = *DEFAULT_ACCOUNT_ADDR;
     let nft_mint_request = ExecuteRequestBuilder::contract_call_by_hash(
         default_account,
@@ -198,32 +194,4 @@ pub fn deploy_with_nft(
     );
     assert_eq!(balance_of_account, 1u64);
     (builder, marketplace_contract_hash, nft_contract_hash)
-}
-
-#[warn(dead_code)]
-fn get_dictionary_value_from_key<T: CLTyped + FromBytes>(
-    builder: &WasmTestBuilder<InMemoryGlobalState>,
-    nft_contract_key: &Key,
-    dictionary_name: &str,
-    dictionary_key: &str,
-) -> T {
-    let seed_uref = *builder
-        .query(None, *nft_contract_key, &[])
-        .expect("must have nft contract")
-        .as_contract()
-        .expect("must convert contract")
-        .named_keys()
-        .get(dictionary_name)
-        .expect("must have key")
-        .as_uref()
-        .expect("must convert to seed uref");
-
-    builder
-        .query_dictionary_item(None, seed_uref, dictionary_key)
-        .expect("should have dictionary value")
-        .as_cl_value()
-        .expect("T should be CLValue")
-        .to_owned()
-        .into_t()
-        .unwrap()
 }

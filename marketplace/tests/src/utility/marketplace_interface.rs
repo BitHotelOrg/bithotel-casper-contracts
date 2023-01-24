@@ -1,17 +1,12 @@
 use crate::utility::constants::{
-    ARG_COLLECTION, ARG_FEE, ARG_LISTING_ID, ARG_MARKETPLACE_HASH, ARG_PAY_TOKEN, ARG_PRICE,
-    ARG_TOKEN, ARG_TOKEN_ID, ENTRY_POINT_ADD_LISTING, ENTRY_POINT_CANCEL_LISTING,
-    ENTRY_POINT_EXECUTE_LISTING,
+    ARG_COLLECTION, ARG_LISTING_ID, ARG_MARKETPLACE_HASH, ARG_PRICE, ARG_TOKEN_ID,
+    ENTRY_POINT_ADD_LISTING, ENTRY_POINT_CANCEL_LISTING,
 };
-use casper_engine_test_support::{
-    ExecuteRequestBuilder, WasmTestBuilder, ARG_AMOUNT, DEFAULT_ACCOUNT_ADDR,
-};
+use casper_engine_test_support::{ExecuteRequestBuilder, WasmTestBuilder};
 use casper_execution_engine::storage::global_state::in_memory::InMemoryGlobalState;
 use casper_types::{
     account::AccountHash, runtime_args, ContractHash, Key, RuntimeArgs, U256, U512,
 };
-
-use super::helpers;
 
 #[derive(Clone, Copy)]
 pub struct MarketplaceInstance {

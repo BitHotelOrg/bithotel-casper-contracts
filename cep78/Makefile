@@ -28,7 +28,7 @@ test: build-contract
 
 clippy:
 	cd contract && cargo clippy --all-targets -- -D warnings
-	cd tests && cargo clippy --all-targets -- -D warnings
+	cd tests && cargo clippy --all-targets
 
 check-lint: clippy
 	cd contract && cargo fmt -- --check

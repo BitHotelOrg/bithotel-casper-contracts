@@ -16,7 +16,7 @@ pub(crate) fn get_contract_hash(
         .get(contract_name)
         .expect("must have contract hash key as part of contract creation")
         .into_hash()
-        .map(|hash| ContractHash::new(hash))
+        .map(ContractHash::new)
         .expect("must get contract hash")
 }
 
