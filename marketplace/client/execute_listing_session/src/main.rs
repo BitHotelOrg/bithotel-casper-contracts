@@ -17,9 +17,6 @@ const ARG_LISTING_ID: &str = "listing_id";
 const ARG_AMOUNT: &str = "amount";
 const ARG_PURSE: &str = "purse";
 const ENTRY_POINT_EXECUTE_LISTING: &str = "execute_listing";
-/**
- * TODO: call execute listing from marketplace contract
- */
 
 #[no_mangle]
 pub extern "C" fn call() {
