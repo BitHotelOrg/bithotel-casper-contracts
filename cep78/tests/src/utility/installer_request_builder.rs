@@ -8,14 +8,11 @@ use casper_execution_engine::core::engine_state::ExecuteRequest;
 use casper_types::{account::AccountHash, CLValue, ContractHash, RuntimeArgs};
 
 use crate::utility::constants::{
-    ARG_CONTRACT_WHITELIST, ARG_HOLDER_MODE, ARG_IDENTIFIER_MODE, ARG_METADATA_MUTABILITY,
-    ARG_WHITELIST_MODE,
-};
-
-use super::constants::{
-    ARG_ALLOW_MINTING, ARG_COLLECTION_NAME, ARG_COLLECTION_SYMBOL, ARG_JSON_SCHEMA,
-    ARG_MINTING_MODE, ARG_NFT_KIND, ARG_NFT_METADATA_KIND, ARG_OWNERSHIP_MODE,
-    ARG_TOTAL_TOKEN_SUPPLY,
+    ARG_ALLOW_MINTING, ARG_BURN_MODE, ARG_COLLECTION_NAME, ARG_COLLECTION_SYMBOL,
+    ARG_CONTRACT_WHITELIST, ARG_HOLDER_MODE, ARG_IDENTIFIER_MODE, ARG_JSON_SCHEMA,
+    ARG_METADATA_MUTABILITY, ARG_MINTING_MODE, ARG_NAMED_KEY_CONVENTION, ARG_NFT_KIND,
+    ARG_NFT_METADATA_KIND, ARG_OWNERSHIP_MODE, ARG_OWNER_LOOKUP_MODE, ARG_TOTAL_TOKEN_SUPPLY,
+    ARG_WHITELIST_MODE, NFT_TEST_COLLECTION, NFT_TEST_SYMBOL,
 };
 
 pub(crate) static TEST_CUSTOM_METADATA_SCHEMA: Lazy<CustomMetadataSchema> = Lazy::new(|| {
@@ -132,6 +129,25 @@ pub enum MetadataMutability {
     Mutable = 1,
 }
 
+#[repr(u8)]
+pub enum BurnMode {
+    Burnable = 0,
+    NonBurnable = 1,
+}
+
+#[repr(u8)]
+pub enum OwnerReverseLookupMode {
+    NoLookUp = 0,
+    Complete = 1,
+}
+
+#[repr(u8)]
+pub enum NamedKeyConventionMode {
+    DerivedFromCollectionName = 0,
+    V1_0Standard = 1,
+    V1_0Custom = 2,
+}
+
 #[derive(Debug)]
 pub(crate) struct InstallerRequestBuilder {
     account_hash: AccountHash,
@@ -150,6 +166,9 @@ pub(crate) struct InstallerRequestBuilder {
     nft_metadata_kind: CLValue,
     identifier_mode: CLValue,
     metadata_mutability: CLValue,
+    burn_mode: CLValue,
+    reporting_mode: CLValue,
+    named_key_convention: CLValue,
 }
 
 impl InstallerRequestBuilder {
@@ -163,21 +182,29 @@ impl InstallerRequestBuilder {
         InstallerRequestBuilder {
             account_hash: AccountHash::default(),
             session_file: String::default(),
-            collection_name: CLValue::from_t("name".to_string()).expect("name is legit CLValue"),
-            collection_symbol: CLValue::from_t("SYM").expect("collection_symbol is legit CLValue"),
+            collection_name: CLValue::from_t(NFT_TEST_COLLECTION.to_string())
+                .expect("name is legit CLValue"),
+            collection_symbol: CLValue::from_t(NFT_TEST_SYMBOL)
+                .expect("collection_symbol is legit CLValue"),
             total_token_supply: CLValue::from_t(1u64).expect("total_token_supply is legit CLValue"),
-            allow_minting: CLValue::from_t(Some(true)).unwrap(),
-            minting_mode: CLValue::from_t(Some(MintingMode::Installer as u8)).unwrap(),
+            allow_minting: CLValue::from_t(true).unwrap(),
+            minting_mode: CLValue::from_t(MintingMode::Installer as u8).unwrap(),
             ownership_mode: CLValue::from_t(OwnershipMode::Minter as u8).unwrap(),
             nft_kind: CLValue::from_t(NFTKind::Physical as u8).unwrap(),
-            holder_mode: CLValue::from_t(Some(NFTHolderMode::Mixed as u8)).unwrap(),
-            whitelist_mode: CLValue::from_t(Some(WhitelistMode::Unlocked as u8)).unwrap(),
-            contract_whitelist: CLValue::from_t(Some(Vec::<ContractHash>::new())).unwrap(),
+            holder_mode: CLValue::from_t(NFTHolderMode::Mixed as u8).unwrap(),
+            whitelist_mode: CLValue::from_t(WhitelistMode::Unlocked as u8).unwrap(),
+            contract_whitelist: CLValue::from_t(Vec::<ContractHash>::new()).unwrap(),
             json_schema: CLValue::from_t("test".to_string())
                 .expect("test_metadata was created from a concrete value"),
             nft_metadata_kind: CLValue::from_t(NFTMetadataKind::NFT721 as u8).unwrap(),
             identifier_mode: CLValue::from_t(NFTIdentifierMode::Ordinal as u8).unwrap(),
             metadata_mutability: CLValue::from_t(MetadataMutability::Mutable as u8).unwrap(),
+            burn_mode: CLValue::from_t(BurnMode::Burnable as u8).unwrap(),
+            reporting_mode: CLValue::from_t(OwnerReverseLookupMode::Complete as u8).unwrap(),
+            named_key_convention: CLValue::from_t(
+                NamedKeyConventionMode::DerivedFromCollectionName as u8,
+            )
+            .unwrap(),
         }
     }
 
@@ -225,13 +252,13 @@ impl InstallerRequestBuilder {
     }
 
     // Why Option here? The None case should be taken care of when running default
-    pub(crate) fn with_allowing_minting(mut self, allow_minting: Option<bool>) -> Self {
+    pub(crate) fn with_allowing_minting(mut self, allow_minting: bool) -> Self {
         self.allow_minting =
             CLValue::from_t(allow_minting).expect("allow minting is legit CLValue");
         self
     }
 
-    pub(crate) fn with_minting_mode(mut self, minting_mode: Option<u8>) -> Self {
+    pub(crate) fn with_minting_mode(mut self, minting_mode: u8) -> Self {
         self.minting_mode = CLValue::from_t(minting_mode).expect("public minting is legit CLValue");
         self
     }
@@ -242,17 +269,17 @@ impl InstallerRequestBuilder {
     }
 
     pub(crate) fn with_holder_mode(mut self, holder_mode: NFTHolderMode) -> Self {
-        self.holder_mode = CLValue::from_t(Some(holder_mode as u8)).unwrap();
+        self.holder_mode = CLValue::from_t(holder_mode as u8).unwrap();
         self
     }
 
     pub(crate) fn with_whitelist_mode(mut self, whitelist_mode: WhitelistMode) -> Self {
-        self.whitelist_mode = CLValue::from_t(Some(whitelist_mode as u8)).unwrap();
+        self.whitelist_mode = CLValue::from_t(whitelist_mode as u8).unwrap();
         self
     }
 
     pub(crate) fn with_contract_whitelist(mut self, contract_whitelist: Vec<ContractHash>) -> Self {
-        self.contract_whitelist = CLValue::from_t(Some(contract_whitelist)).unwrap();
+        self.contract_whitelist = CLValue::from_t(contract_whitelist).unwrap();
         self
     }
 
@@ -279,6 +306,16 @@ impl InstallerRequestBuilder {
         self
     }
 
+    pub(crate) fn with_burn_mode(mut self, burn_mode: BurnMode) -> Self {
+        self.burn_mode = CLValue::from_t(burn_mode as u8).unwrap();
+        self
+    }
+
+    pub(crate) fn with_reporting_mode(mut self, reporting_mode: OwnerReverseLookupMode) -> Self {
+        self.reporting_mode = CLValue::from_t(reporting_mode as u8).unwrap();
+        self
+    }
+
     pub(crate) fn build(self) -> ExecuteRequest {
         let mut runtime_args = RuntimeArgs::new();
         runtime_args.insert_cl_value(ARG_COLLECTION_NAME, self.collection_name);
@@ -295,6 +332,9 @@ impl InstallerRequestBuilder {
         runtime_args.insert_cl_value(ARG_NFT_METADATA_KIND, self.nft_metadata_kind);
         runtime_args.insert_cl_value(ARG_IDENTIFIER_MODE, self.identifier_mode);
         runtime_args.insert_cl_value(ARG_METADATA_MUTABILITY, self.metadata_mutability);
+        runtime_args.insert_cl_value(ARG_BURN_MODE, self.burn_mode);
+        runtime_args.insert_cl_value(ARG_OWNER_LOOKUP_MODE, self.reporting_mode);
+        runtime_args.insert_cl_value(ARG_NAMED_KEY_CONVENTION, self.named_key_convention);
         ExecuteRequestBuilder::standard(self.account_hash, &self.session_file, runtime_args).build()
     }
 }

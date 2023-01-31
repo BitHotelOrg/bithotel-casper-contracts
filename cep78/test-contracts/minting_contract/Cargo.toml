@@ -1,16 +1,16 @@
 [package]
-name = "transfer_session"
+name = "minting_contract"
 version = "1.1.1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-casper-contract = "1.4.3"
+casper-contract = {version = "1.4.3", features = ["test-support"]}
 casper-types = "1.4.5"
 
 [[bin]]
-name = "transfer_call"
+name = "minting_contract"
 path = "src/main.rs"
 bench = false
 doctest = false
