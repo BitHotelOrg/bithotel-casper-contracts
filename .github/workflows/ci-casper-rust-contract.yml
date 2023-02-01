@@ -23,12 +23,12 @@ jobs:
         run: echo "::set-output name=version::$(cat resources/rust-toolchain.in)"
 
       - run: sudo apt update && sudo apt install -y build-essential wabt
-      # - uses: actions-rs/toolchain@v1
-      #   with:
-      #     toolchain: ${{ steps.nightly-toolchain.outputs.version }}
-      #     profile: minimal
-      #     components: rustfmt, clippy
-      #     target: wasm32-unknown-unknown
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ steps.nightly-toolchain.outputs.version }}
+          profile: minimal
+          components: rustfmt, clippy
+          target: wasm32-unknown-unknown
 
       - run: make prepare
 
