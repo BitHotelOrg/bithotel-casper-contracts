@@ -27,7 +27,7 @@ build-contract:
 setup-test: build-contract
 	mkdir -p tests/wasm
 	mkdir -p tests/wasm/1_0_0; curl -L https://github.com/casper-ecosystem/cep-78-enhanced-nft/releases/download/v1.0.0/cep-78-wasm.tar.gz | tar zxv -C tests/wasm/1_0_0/
-	cp ../target/wasm32-unknown-unknown/release/contract.wasm tests/wasm
+	cp ../target/wasm32-unknown-unknown/release/cep78.wasm tests/wasm
 	cp ../target/wasm32-unknown-unknown/release/mint_call.wasm tests/wasm
 	cp ../target/wasm32-unknown-unknown/release/balance_of_call.wasm tests/wasm
 	cp ../target/wasm32-unknown-unknown/release/owner_of_call.wasm tests/wasm
