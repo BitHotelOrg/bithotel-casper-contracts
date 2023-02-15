@@ -1,4 +1,4 @@
-pub(crate) const NFT_CONTRACT_WASM: &str = "contract.wasm";
+pub(crate) const NFT_CONTRACT_WASM: &str = "cep78.wasm";
 pub(crate) const MINT_SESSION_WASM: &str = "mint_call.wasm";
 pub(crate) const MINTING_CONTRACT_WASM: &str = "minting_contract.wasm";
 pub(crate) const TRANSFER_SESSION_WASM: &str = "transfer_call.wasm";
