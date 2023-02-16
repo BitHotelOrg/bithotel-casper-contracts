@@ -15,12 +15,14 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3.3.0
+      - uses: Swatinem/rust-cache@v2
 
       - name: Get nightly toolchain from file
         id: nightly-toolchain
         run: echo "::set-output name=version::$(cat resources/rust-toolchain.in)"
 
+      - run: sudo apt update && sudo apt install -y build-essential wabt
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ steps.nightly-toolchain.outputs.version }}
@@ -29,13 +31,12 @@ jobs:
           target: wasm32-unknown-unknown
 
       - run: make prepare
-      # Needed for gcc install
-      - run: sudo apt update && sudo apt install -y build-essential
-      - uses: Swatinem/rust-cache@v2
+
       - name: "Check linting"
         run: make check-lint
-      # Tests will be added after NCTL interaction is possible.
+
       - name: "Tests"
         run: make test
+
       - name: "Build"
         run: make build-contract

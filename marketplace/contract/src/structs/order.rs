@@ -19,7 +19,7 @@ pub struct Listing {
 }
 
 #[repr(u16)]
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Status {
     Added = 0,
     Cancelled = 1,
