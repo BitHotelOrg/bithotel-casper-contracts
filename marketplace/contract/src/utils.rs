@@ -1,9 +1,13 @@
 #![allow(dead_code)]
 use casper_contract::{contract_api::runtime, unwrap_or_revert::UnwrapOrRevert};
-use casper_types::{system::CallStackElement, Key};
+use casper_types::{account::AccountHash, system::CallStackElement, ContractHash, Key};
 
-use crate::enums::Address;
-use alloc::string::String;
+use crate::{
+    enums::Address,
+    marketplace::{ADMIN_DICT, WHITELIST_DICT},
+    structs::dict::Dict,
+};
+use alloc::string::{String, ToString};
 use casper_types::{bytesrepr::ToBytes, CLTyped};
 
 fn get_immediate_call_stack_item() -> Option<CallStackElement> {
@@ -49,4 +53,16 @@ pub fn key_value_to_storage_key<T: CLTyped + ToBytes>(key: &Key, value: &T) -> S
 
     let bytes_key = runtime::blake2b(bytes_0);
     hex::encode(bytes_key)
+}
+
+pub fn is_admin(caller: AccountHash) -> bool {
+    let admins = Dict::instance(ADMIN_DICT);
+    let admin = admins.get(&caller.to_string()).unwrap_or(false);
+    admin
+}
+
+pub fn is_whitelisted(contract: ContractHash) -> bool {
+    let whitelist = Dict::instance(WHITELIST_DICT);
+    let whitelisted = whitelist.get(&contract.to_string()).unwrap_or(false);
+    whitelisted
 }

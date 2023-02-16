@@ -1,10 +1,12 @@
 use core::ops::Add;
 
 use crate::{
-    error::MarketplaceError, interfaces::icep78::ICEP78, utils::get_current_address, Dict, Listing,
-    Status, TokenId,
+    error::MarketplaceError,
+    interfaces::icep78::ICEP78,
+    utils::{get_current_address, is_admin, is_whitelisted},
+    Dict, Listing, Status, TokenId,
 };
-use casper_types::{CLValue, URef};
+use casper_types::{account::AccountHash, CLValue, URef};
 // Importing Rust types.
 use alloc::{
     string::{String, ToString},
@@ -26,12 +28,17 @@ const ENTRY_POINT_ADD_LISTING: &str = "add_listing";
 const ENTRY_POINT_CANCEL_LISTING: &str = "cancel_listing";
 const ENTRY_POINT_EXECUTE_LISTING: &str = "execute_listing";
 const ENTRY_POINT_GET_LISTING: &str = "get_listing";
+const ENTRY_POINT_WHITELIST: &str = "whitelist";
+const ENTRY_POINT_DELIST: &str = "delist";
+const ENTRY_POINT_ADD_ADMIN: &str = "add_admin";
+const ENTRY_POINT_REMOVE_ADMIN: &str = "remove_admin";
 
 // Creating constants for the entry point arguments.
 // const CONTRACT_NAME_ARG: &str = "contract_name_arg";
 const FEE_WALLET_ARG: &str = "fee_wallet";
 // const FEE_ARG: &str = "fee";
 const COLLECTION_ARG: &str = "collection";
+const ACCOUNT_ARG: &str = "account";
 const TOKEN_ID_ARG: &str = "token_id";
 const PRICE_ARG: &str = "price";
 const LISTING_ID_ARG: &str = "listing_id";
@@ -40,6 +47,8 @@ const PURSE_ARG: &str = "purse";
 // Creating constants for values within the contract.
 const FEE_WALLET: &str = "fee_wallet";
 const LISTINGS_DICT: &str = "listings_dict";
+pub const WHITELIST_DICT: &str = "whitelist_dict";
+pub const ADMIN_DICT: &str = "admin_dict";
 const LISTING_COUNTER: &str = "listing_counter";
 
 #[no_mangle]
@@ -47,6 +56,12 @@ pub extern "C" fn init() {
     let fee_wallet_hash = runtime::get_named_arg::<Key>(FEE_WALLET_ARG);
     runtime::put_key(FEE_WALLET, fee_wallet_hash);
     Dict::init(LISTINGS_DICT);
+    Dict::init(WHITELIST_DICT);
+    Dict::init(ADMIN_DICT);
+
+    let caller = runtime::get_caller();
+    let admins = Dict::instance(ADMIN_DICT);
+    admins.set(&caller.to_string(), true);
 }
 
 #[no_mangle]
@@ -63,6 +78,11 @@ pub extern "C" fn add_listing() {
         .into_hash()
         .map(ContractHash::new)
         .unwrap();
+
+    if !is_whitelisted(collection) {
+        runtime::revert(MarketplaceError::ContractNotWhitelisted);
+    }
+
     let token_id: TokenId = runtime::get_named_arg(TOKEN_ID_ARG);
     let price: U256 = runtime::get_named_arg(PRICE_ARG);
 
@@ -187,6 +207,64 @@ pub extern "C" fn get_listing() {
     runtime::ret(CLValue::from_t(listing.owner).unwrap());
 }
 
+#[no_mangle]
+pub extern "C" fn whitelist() {
+    let caller = runtime::get_caller();
+    let is_admin = is_admin(caller);
+    if !is_admin {
+        runtime::revert(MarketplaceError::CallerNotAdmin);
+    }
+    let contract_hash = runtime::get_named_arg::<Key>(COLLECTION_ARG)
+        .into_hash()
+        .map(ContractHash::new)
+        .unwrap();
+    let whitelisted = Dict::instance(WHITELIST_DICT);
+    whitelisted.set(&contract_hash.to_string(), true);
+}
+
+#[no_mangle]
+pub extern "C" fn delist() {
+    let caller = runtime::get_caller();
+    let is_admin = is_admin(caller);
+    if !is_admin {
+        runtime::revert(MarketplaceError::CallerNotAdmin);
+    }
+    let contract_hash = runtime::get_named_arg::<Key>(COLLECTION_ARG)
+        .into_hash()
+        .map(ContractHash::new)
+        .unwrap();
+    let whitelisted = Dict::instance(WHITELIST_DICT);
+    whitelisted.set(&contract_hash.to_string(), false);
+}
+
+#[no_mangle]
+pub extern "C" fn add_admin() {
+    let caller = runtime::get_caller();
+    let is_admin = is_admin(caller);
+    if !is_admin {
+        runtime::revert(MarketplaceError::CallerNotAdmin);
+    }
+    let account_key = runtime::get_named_arg::<Key>(ACCOUNT_ARG)
+        .into_account()
+        .unwrap();
+    let admins = Dict::instance(ADMIN_DICT);
+    admins.set(&account_key.to_string(), true);
+}
+
+#[no_mangle]
+pub extern "C" fn remove_admin() {
+    let caller = runtime::get_caller();
+    let is_admin = is_admin(caller);
+    if !is_admin {
+        runtime::revert(MarketplaceError::CallerNotAdmin);
+    }
+    let account_hash = runtime::get_named_arg::<Key>(ACCOUNT_ARG)
+        .into_account()
+        .unwrap();
+    let admins = Dict::instance(ADMIN_DICT);
+    admins.set(&account_hash.to_string(), false);
+}
+
 //This is the full `call` function as defined within the donation contract.
 #[no_mangle]
 pub extern "C" fn call() {
@@ -236,12 +314,44 @@ pub extern "C" fn call() {
         EntryPointAccess::Public,
         EntryPointType::Contract,
     );
+    let whitelist_entry_point = EntryPoint::new(
+        ENTRY_POINT_WHITELIST,
+        vec![Parameter::new(COLLECTION_ARG, CLType::Key)],
+        CLType::URef,
+        EntryPointAccess::Public,
+        EntryPointType::Contract,
+    );
+    let delist_entry_point = EntryPoint::new(
+        ENTRY_POINT_DELIST,
+        vec![Parameter::new(COLLECTION_ARG, CLType::Key)],
+        CLType::URef,
+        EntryPointAccess::Public,
+        EntryPointType::Contract,
+    );
+    let add_admin_entry_point = EntryPoint::new(
+        ENTRY_POINT_ADD_ADMIN,
+        vec![Parameter::new(ACCOUNT_ARG, CLType::Key)],
+        CLType::URef,
+        EntryPointAccess::Public,
+        EntryPointType::Contract,
+    );
+    let remove_admin_entry_point = EntryPoint::new(
+        ENTRY_POINT_REMOVE_ADMIN,
+        vec![Parameter::new(ACCOUNT_ARG, CLType::Key)],
+        CLType::URef,
+        EntryPointAccess::Public,
+        EntryPointType::Contract,
+    );
     let mut entry_points = EntryPoints::new();
     entry_points.add_entry_point(init_entry_point);
     entry_points.add_entry_point(add_listing_entry_point);
     entry_points.add_entry_point(cancel_listing_entry_point);
     entry_points.add_entry_point(execute_listing_entry_point);
     entry_points.add_entry_point(get_listing_entry_point);
+    entry_points.add_entry_point(whitelist_entry_point);
+    entry_points.add_entry_point(delist_entry_point);
+    entry_points.add_entry_point(add_admin_entry_point);
+    entry_points.add_entry_point(remove_admin_entry_point);
 
     let listing_count_start = storage::new_uref(0u64);
 

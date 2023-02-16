@@ -59,3 +59,24 @@ fn should_not_add_listing_1() {
         false,
     );
 }
+
+/**
+ * add listing
+ * should fail, contract is delisted
+ */
+#[test]
+fn should_not_add_listing_2() {
+    let (mut builder, marketplace_contract_hash, nft_contract_hash) = deploy_with_nft(true);
+
+    let marketplace = MarketplaceInstance::new(marketplace_contract_hash);
+
+    marketplace.delist(&mut builder, *DEFAULT_ACCOUNT_ADDR, nft_contract_hash, true);
+    marketplace.add_listing(
+        &mut builder,
+        *DEFAULT_ACCOUNT_ADDR,
+        nft_contract_hash,
+        0u64,
+        U256::from(1u64),
+        false,
+    );
+}
