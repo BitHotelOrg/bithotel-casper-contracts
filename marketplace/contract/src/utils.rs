@@ -57,12 +57,10 @@ pub fn key_value_to_storage_key<T: CLTyped + ToBytes>(key: &Key, value: &T) -> S
 
 pub fn is_admin(caller: AccountHash) -> bool {
     let admins = Dict::instance(ADMIN_DICT);
-    let admin = admins.get(&caller.to_string()).unwrap_or(false);
-    admin
+    admins.get(&caller.to_string()).unwrap_or(false)
 }
 
 pub fn is_whitelisted(contract: ContractHash) -> bool {
     let whitelist = Dict::instance(WHITELIST_DICT);
-    let whitelisted = whitelist.get(&contract.to_string()).unwrap_or(false);
-    whitelisted
+    whitelist.get(&contract.to_string()).unwrap_or(false)
 }

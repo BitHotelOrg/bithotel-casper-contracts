@@ -6,7 +6,7 @@ use crate::{
     utils::{get_current_address, is_admin, is_whitelisted},
     Dict, Listing, Status, TokenId,
 };
-use casper_types::{account::AccountHash, CLValue, URef};
+use casper_types::{CLValue, URef};
 // Importing Rust types.
 use alloc::{
     string::{String, ToString},
