@@ -4,7 +4,7 @@ use casper_types::{account::AccountHash, system::CallStackElement, ContractHash,
 
 use crate::{
     enums::Address,
-    marketplace::{ADMIN_DICT, WHITELIST_DICT},
+    marketplace::{ADMIN_DICT, OPTIONS_DICT, PAUSED_OPTION, WHITELIST_DICT},
     structs::dict::Dict,
 };
 use alloc::string::{String, ToString};
@@ -63,4 +63,9 @@ pub fn is_admin(caller: AccountHash) -> bool {
 pub fn is_whitelisted(contract: ContractHash) -> bool {
     let whitelist = Dict::instance(WHITELIST_DICT);
     whitelist.get(&contract.to_string()).unwrap_or(false)
+}
+
+pub fn is_paused() -> bool {
+    let options = Dict::instance(OPTIONS_DICT);
+    options.get(PAUSED_OPTION).unwrap_or_revert()
 }

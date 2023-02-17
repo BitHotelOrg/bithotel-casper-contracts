@@ -3,7 +3,7 @@ use core::ops::Add;
 use crate::{
     error::MarketplaceError,
     interfaces::icep78::ICEP78,
-    utils::{get_current_address, is_admin, is_whitelisted},
+    utils::{get_current_address, is_admin, is_paused, is_whitelisted},
     Dict, Listing, Status, TokenId,
 };
 use casper_types::{CLValue, URef};
@@ -32,6 +32,8 @@ const ENTRY_POINT_WHITELIST: &str = "whitelist";
 const ENTRY_POINT_DELIST: &str = "delist";
 const ENTRY_POINT_ADD_ADMIN: &str = "add_admin";
 const ENTRY_POINT_REMOVE_ADMIN: &str = "remove_admin";
+const ENTRY_POINT_PAUSE: &str = "pause";
+const ENTRY_POINT_UN_PAUSE: &str = "un_pause";
 
 // Creating constants for the entry point arguments.
 // const CONTRACT_NAME_ARG: &str = "contract_name_arg";
@@ -47,9 +49,12 @@ const PURSE_ARG: &str = "purse";
 // Creating constants for values within the contract.
 const FEE_WALLET: &str = "fee_wallet";
 const LISTINGS_DICT: &str = "listings_dict";
+pub const OPTIONS_DICT: &str = "options_dict";
 pub const WHITELIST_DICT: &str = "whitelist_dict";
 pub const ADMIN_DICT: &str = "admin_dict";
 const LISTING_COUNTER: &str = "listing_counter";
+
+pub const PAUSED_OPTION: &str = "pause";
 
 #[no_mangle]
 pub extern "C" fn init() {
@@ -58,14 +63,22 @@ pub extern "C" fn init() {
     Dict::init(LISTINGS_DICT);
     Dict::init(WHITELIST_DICT);
     Dict::init(ADMIN_DICT);
+    Dict::init(OPTIONS_DICT);
 
     let caller = runtime::get_caller();
     let admins = Dict::instance(ADMIN_DICT);
     admins.set(&caller.to_string(), true);
+
+    let options = Dict::instance(OPTIONS_DICT);
+    options.set(PAUSED_OPTION, false);
 }
 
 #[no_mangle]
 pub extern "C" fn add_listing() {
+    let caller = runtime::get_caller();
+    if is_paused() && !is_admin(caller) {
+        runtime::revert(MarketplaceError::ContractIsPaused);
+    }
     let marketplace_address = get_current_address(
         runtime::get_call_stack()
             .into_iter()
@@ -73,7 +86,6 @@ pub extern "C" fn add_listing() {
             .next()
             .unwrap_or_revert(),
     );
-    let caller = runtime::get_caller();
     let collection = runtime::get_named_arg::<Key>(COLLECTION_ARG)
         .into_hash()
         .map(ContractHash::new)
@@ -117,6 +129,10 @@ pub extern "C" fn add_listing() {
 
 #[no_mangle]
 pub extern "C" fn cancel_listing() {
+    let caller = runtime::get_caller();
+    if is_paused() && !is_admin(caller) {
+        runtime::revert(MarketplaceError::ContractIsPaused);
+    }
     let marketplace_address = get_current_address(
         runtime::get_call_stack()
             .into_iter()
@@ -124,7 +140,6 @@ pub extern "C" fn cancel_listing() {
             .next()
             .unwrap_or_revert(),
     );
-    let caller = runtime::get_caller();
     let listing_id = runtime::get_named_arg::<u64>(LISTING_ID_ARG);
 
     let listings = Dict::instance(LISTINGS_DICT);
@@ -155,6 +170,10 @@ pub extern "C" fn cancel_listing() {
 
 #[no_mangle]
 pub extern "C" fn execute_listing() {
+    let caller = runtime::get_caller();
+    if is_paused() && !is_admin(caller) {
+        runtime::revert(MarketplaceError::ContractIsPaused);
+    }
     let marketplace_address = get_current_address(
         runtime::get_call_stack()
             .into_iter()
@@ -163,7 +182,6 @@ pub extern "C" fn execute_listing() {
             .unwrap_or_revert(),
     );
 
-    let caller = runtime::get_caller();
     let listing_id = runtime::get_named_arg::<u64>(LISTING_ID_ARG);
     let caller_purse = runtime::get_named_arg::<URef>(PURSE_ARG);
 
@@ -265,6 +283,32 @@ pub extern "C" fn remove_admin() {
     admins.set(&account_hash.to_string(), false);
 }
 
+#[no_mangle]
+pub extern "C" fn pause() {
+    let caller = runtime::get_caller();
+    if !is_admin(caller) {
+        runtime::revert(MarketplaceError::CallerNotAdmin);
+    }
+    if is_paused() {
+        runtime::revert(MarketplaceError::ContractAlreadyPaused);
+    }
+    let options = Dict::instance(OPTIONS_DICT);
+    options.set(PAUSED_OPTION, true);
+}
+
+#[no_mangle]
+pub extern "C" fn un_pause() {
+    let caller = runtime::get_caller();
+    if !is_admin(caller) {
+        runtime::revert(MarketplaceError::CallerNotAdmin);
+    }
+    if !is_paused() {
+        runtime::revert(MarketplaceError::ContractAlreadyUnPaused);
+    }
+    let options = Dict::instance(OPTIONS_DICT);
+    options.set(PAUSED_OPTION, false);
+}
+
 //This is the full `call` function as defined within the donation contract.
 #[no_mangle]
 pub extern "C" fn call() {
@@ -342,6 +386,20 @@ pub extern "C" fn call() {
         EntryPointAccess::Public,
         EntryPointType::Contract,
     );
+    let pause_entry_point = EntryPoint::new(
+        ENTRY_POINT_PAUSE,
+        vec![],
+        CLType::URef,
+        EntryPointAccess::Public,
+        EntryPointType::Contract,
+    );
+    let un_pause_entry_point = EntryPoint::new(
+        ENTRY_POINT_UN_PAUSE,
+        vec![],
+        CLType::URef,
+        EntryPointAccess::Public,
+        EntryPointType::Contract,
+    );
     let mut entry_points = EntryPoints::new();
     entry_points.add_entry_point(init_entry_point);
     entry_points.add_entry_point(add_listing_entry_point);
@@ -352,6 +410,8 @@ pub extern "C" fn call() {
     entry_points.add_entry_point(delist_entry_point);
     entry_points.add_entry_point(add_admin_entry_point);
     entry_points.add_entry_point(remove_admin_entry_point);
+    entry_points.add_entry_point(pause_entry_point);
+    entry_points.add_entry_point(un_pause_entry_point);
 
     let listing_count_start = storage::new_uref(0u64);
 

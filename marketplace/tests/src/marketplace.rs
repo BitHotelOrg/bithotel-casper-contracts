@@ -135,12 +135,13 @@ pub fn mint_nft(
 
 pub fn approve_nft(
     builder: &mut WasmTestBuilder<InMemoryGlobalState>,
+    sender: AccountHash,
     nft_contract_hash: ContractHash,
     operator: Key,
     token_id: u64,
 ) {
     let nft_approve_request = ExecuteRequestBuilder::contract_call_by_hash(
-        *DEFAULT_ACCOUNT_ADDR,
+        sender,
         nft_contract_hash,
         "approve",
         runtime_args! {
@@ -181,6 +182,7 @@ pub fn deploy_with_nft(
     if approve_marketplace {
         approve_nft(
             &mut builder,
+            *DEFAULT_ACCOUNT_ADDR,
             nft_contract_hash,
             Key::from(marketplace_contract_hash),
             0u64,

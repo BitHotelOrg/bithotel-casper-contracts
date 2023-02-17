@@ -56,3 +56,24 @@ pub(crate) fn nft_get_balance(
     builder.exec(session_code_request).expect_success().commit();
     query_stored_value::<u64>(builder, sender.into(), [key_name.to_string()].into())
 }
+
+pub(crate) fn transfer_nft(
+    builder: &mut WasmTestBuilder<InMemoryGlobalState>,
+    sender: AccountHash,
+    nft_contract_hash: ContractHash,
+    recipient: Key,
+    token_id: u64,
+) {
+    let session_code_request = ExecuteRequestBuilder::contract_call_by_hash(
+        sender,
+        nft_contract_hash,
+        "transfer",
+        runtime_args! {
+            "token_id" => token_id,
+            "source_key" => Key::from(sender),
+            "target_key" => recipient,
+        },
+    )
+    .build();
+    builder.exec(session_code_request).expect_success().commit();
+}

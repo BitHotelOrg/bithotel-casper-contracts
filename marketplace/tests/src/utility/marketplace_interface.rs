@@ -210,4 +210,50 @@ impl<'a> MarketplaceInstance {
         }
         builder.commit();
     }
+
+    pub fn pause(
+        self,
+        builder: &mut WasmTestBuilder<InMemoryGlobalState>,
+        sender: AccountHash,
+        should_succeed: bool,
+    ) {
+        let request = ExecuteRequestBuilder::contract_call_by_hash(
+            sender,
+            self.contract_hash,
+            "pause",
+            runtime_args! {},
+        )
+        .build();
+
+        builder.exec(request);
+        if should_succeed {
+            builder.expect_success();
+        } else {
+            builder.expect_failure();
+        }
+        builder.commit();
+    }
+
+    pub fn un_pause(
+        self,
+        builder: &mut WasmTestBuilder<InMemoryGlobalState>,
+        sender: AccountHash,
+        should_succeed: bool,
+    ) {
+        let request = ExecuteRequestBuilder::contract_call_by_hash(
+            sender,
+            self.contract_hash,
+            "un_pause",
+            runtime_args! {},
+        )
+        .build();
+
+        builder.exec(request);
+        if should_succeed {
+            builder.expect_success();
+        } else {
+            builder.expect_failure();
+        }
+        builder.commit();
+    }
 }
