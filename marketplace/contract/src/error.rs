@@ -13,6 +13,9 @@ pub enum MarketplaceError {
     ListingPriceIsZero = 8,
     CallerNotAdmin = 9,
     ContractNotWhitelisted = 10,
+    ContractIsPaused = 11,
+    ContractAlreadyPaused = 12,
+    ContractAlreadyUnPaused = 13,
 }
 
 impl From<MarketplaceError> for ApiError {
