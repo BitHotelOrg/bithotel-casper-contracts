@@ -24,7 +24,7 @@ check-lint: clippy
 	cd tests && cargo fmt -- --check
 
 lint: clippy
-	cd client/execute_listing_session && cargo fmt --target wasm32-unknown-unknown
+	cd client/execute_listing_session && cargo fmt
 	cd contract && cargo fmt
 	cd tests && cargo fmt
 

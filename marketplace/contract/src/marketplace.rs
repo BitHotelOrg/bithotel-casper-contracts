@@ -68,7 +68,7 @@ pub extern "C" fn init() {
     runtime::put_key(FEE_WALLET, fee_wallet_hash);
     runtime::put_key(
         CONTRACT_NAME_KEY,
-        storage::new_uref(CONTRACT_NAME.clone()).into(),
+        storage::new_uref(CONTRACT_NAME.to_string()).into(),
     );
     Dict::init(LISTINGS_DICT);
     Dict::init(WHITELIST_DICT);
