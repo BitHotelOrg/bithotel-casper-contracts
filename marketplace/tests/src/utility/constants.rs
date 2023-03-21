@@ -1,5 +1,4 @@
 pub(crate) const ARG_FEE_WALLET: &str = "fee_wallet";
-pub(crate) const ARG_ACCEPTED_TOKENS: &str = "accepted_tokens";
 
 // Calling the contract deploy.
 pub(crate) const MARKETPLACE: &str = "marketplace.wasm";

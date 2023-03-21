@@ -106,4 +106,108 @@ impl<'a> MarketplaceInstance {
         // U512::from(0)
         builder.get_proposer_purse_balance() - proposer_reward_starting_balance
     }
+
+    pub fn whitelist(
+        self,
+        builder: &mut WasmTestBuilder<InMemoryGlobalState>,
+        sender: AccountHash,
+        contract: ContractHash,
+        should_succeed: bool,
+    ) {
+        let request = ExecuteRequestBuilder::contract_call_by_hash(
+            sender,
+            self.contract_hash,
+            "whitelist",
+            runtime_args! {
+                "collection" => Key::from(contract),
+            },
+        )
+        .build();
+
+        builder.exec(request);
+        if should_succeed {
+            builder.expect_success();
+        } else {
+            builder.expect_failure();
+        }
+        builder.commit();
+    }
+
+    pub fn delist(
+        self,
+        builder: &mut WasmTestBuilder<InMemoryGlobalState>,
+        sender: AccountHash,
+        contract: ContractHash,
+        should_succeed: bool,
+    ) {
+        let request = ExecuteRequestBuilder::contract_call_by_hash(
+            sender,
+            self.contract_hash,
+            "delist",
+            runtime_args! {
+                "collection" => Key::from(contract),
+            },
+        )
+        .build();
+
+        builder.exec(request);
+        if should_succeed {
+            builder.expect_success();
+        } else {
+            builder.expect_failure();
+        }
+        builder.commit();
+    }
+
+    pub fn add_admin(
+        self,
+        builder: &mut WasmTestBuilder<InMemoryGlobalState>,
+        sender: AccountHash,
+        account: AccountHash,
+        should_succeed: bool,
+    ) {
+        let request = ExecuteRequestBuilder::contract_call_by_hash(
+            sender,
+            self.contract_hash,
+            "add_admin",
+            runtime_args! {
+                "account" => Key::from(account),
+            },
+        )
+        .build();
+
+        builder.exec(request);
+        if should_succeed {
+            builder.expect_success();
+        } else {
+            builder.expect_failure();
+        }
+        builder.commit();
+    }
+
+    pub fn remove_admin(
+        self,
+        builder: &mut WasmTestBuilder<InMemoryGlobalState>,
+        sender: AccountHash,
+        account: AccountHash,
+        should_succeed: bool,
+    ) {
+        let request = ExecuteRequestBuilder::contract_call_by_hash(
+            sender,
+            self.contract_hash,
+            "remove_admin",
+            runtime_args! {
+                "account" => Key::Account(account),
+            },
+        )
+        .build();
+
+        builder.exec(request);
+        if should_succeed {
+            builder.expect_success();
+        } else {
+            builder.expect_failure();
+        }
+        builder.commit();
+    }
 }

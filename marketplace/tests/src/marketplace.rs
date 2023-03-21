@@ -2,6 +2,7 @@
 use crate::utility::{
     constants::{ARG_FEE_WALLET, CEP78, MARKETPLACE, USER_ACCOUNT_0},
     helpers::{get_contract_hash, nft_get_balance, query_stored_value},
+    marketplace_interface::MarketplaceInstance,
 };
 use casper_engine_test_support::{
     ExecuteRequestBuilder, InMemoryWasmTestBuilder, WasmTestBuilder, DEFAULT_ACCOUNT_ADDR,
@@ -185,6 +186,9 @@ pub fn deploy_with_nft(
             0u64,
         );
     }
+
+    let marketplace = MarketplaceInstance::new(marketplace_contract_hash);
+    marketplace.whitelist(&mut builder, *DEFAULT_ACCOUNT_ADDR, nft_contract_hash, true);
 
     let balance_of_account = nft_get_balance(
         &mut builder,
