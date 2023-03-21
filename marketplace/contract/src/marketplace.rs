@@ -3,7 +3,7 @@ use core::ops::Add;
 use crate::{
     error::MarketplaceError,
     interfaces::icep78::ICEP78,
-    utils::{get_current_address, is_admin, is_paused, is_whitelisted},
+    utils::{get_current_address, is_admin, is_paused, is_whitelisted, named_uref_exists},
     Dict, Listing, Status, TokenId,
 };
 use casper_types::{CLValue, URef};
@@ -22,6 +22,9 @@ use casper_types::{
     EntryPointType, EntryPoints, Key, Parameter, RuntimeArgs, U256, U512,
 };
 
+const CONTRACT_NAME_KEY: &str = "contract_name";
+const CONTRACT_NAME: &str = "bithotel_marketplace_v1.0";
+
 // Creating constants for the various contract entry points.
 const ENTRY_POINT_INIT: &str = "init";
 const ENTRY_POINT_ADD_LISTING: &str = "add_listing";
@@ -36,7 +39,6 @@ const ENTRY_POINT_PAUSE: &str = "pause";
 const ENTRY_POINT_UN_PAUSE: &str = "un_pause";
 
 // Creating constants for the entry point arguments.
-// const CONTRACT_NAME_ARG: &str = "contract_name_arg";
 const FEE_WALLET_ARG: &str = "fee_wallet";
 // const FEE_ARG: &str = "fee";
 const COLLECTION_ARG: &str = "collection";
@@ -58,8 +60,16 @@ pub const PAUSED_OPTION: &str = "pause";
 
 #[no_mangle]
 pub extern "C" fn init() {
+    if named_uref_exists(CONTRACT_NAME_KEY) {
+        runtime::revert(MarketplaceError::ContractAlreadyInitialized);
+    }
+
     let fee_wallet_hash = runtime::get_named_arg::<Key>(FEE_WALLET_ARG);
     runtime::put_key(FEE_WALLET, fee_wallet_hash);
+    runtime::put_key(
+        CONTRACT_NAME_KEY,
+        storage::new_uref(CONTRACT_NAME.clone()).into(),
+    );
     Dict::init(LISTINGS_DICT);
     Dict::init(WHITELIST_DICT);
     Dict::init(ADMIN_DICT);

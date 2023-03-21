@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use casper_contract::{contract_api::runtime, unwrap_or_revert::UnwrapOrRevert};
+use casper_contract::{contract_api::runtime, ext_ffi, unwrap_or_revert::UnwrapOrRevert};
 use casper_types::{account::AccountHash, system::CallStackElement, ContractHash, Key};
 
 use crate::{
@@ -7,8 +7,12 @@ use crate::{
     marketplace::{ADMIN_DICT, OPTIONS_DICT, PAUSED_OPTION, WHITELIST_DICT},
     structs::dict::Dict,
 };
-use alloc::string::{String, ToString};
-use casper_types::{bytesrepr::ToBytes, CLTyped};
+use alloc::{
+    string::{String, ToString},
+    vec,
+    vec::Vec,
+};
+use casper_types::{api_error, bytesrepr::ToBytes, CLTyped};
 
 fn get_immediate_call_stack_item() -> Option<CallStackElement> {
     let call_stack = runtime::get_call_stack();
@@ -68,4 +72,28 @@ pub fn is_whitelisted(contract: ContractHash) -> bool {
 pub fn is_paused() -> bool {
     let options = Dict::instance(OPTIONS_DICT);
     options.get(PAUSED_OPTION).unwrap_or_revert()
+}
+
+pub fn named_uref_exists(name: &str) -> bool {
+    let (name_ptr, name_size, _bytes) = to_ptr(name);
+    let mut key_bytes = vec![0u8; Key::max_serialized_length()];
+    let mut total_bytes: usize = 0;
+    let ret = unsafe {
+        ext_ffi::casper_get_key(
+            name_ptr,
+            name_size,
+            key_bytes.as_mut_ptr(),
+            key_bytes.len(),
+            &mut total_bytes as *mut usize,
+        )
+    };
+
+    api_error::result_from(ret).is_ok()
+}
+
+pub fn to_ptr<T: ToBytes>(t: T) -> (*const u8, usize, Vec<u8>) {
+    let bytes = t.into_bytes().unwrap_or_revert();
+    let ptr = bytes.as_ptr();
+    let size = bytes.len();
+    (ptr, size, bytes)
 }
