@@ -1,0 +1,17 @@
+{
+  "name": "cep78-scripts",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "mint": "ts-node mint.ts"
+  },
+  "dependencies": {
+    "casper-js-sdk": "^2.10.2"
+  },
+  "devDependencies": {
+    "dotenv": "^16.0.3",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.5"
+  }
+}

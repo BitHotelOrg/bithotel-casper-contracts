@@ -1,6 +1,6 @@
 [package]
 name = "contract"
-version = "0.1.0"
+version = "1.1.1"
 edition = "2018"
 
 [dependencies]
@@ -11,7 +11,7 @@ base16 = { version = "0.2", default-features = false, features = ["alloc"] }
 casper-serde-json-wasm = { git = "https://github.com/darthsiroftardis/casper-serde-json-wasm", branch = "casper-no-std"}
 
 [[bin]]
-name = "contract"
+name = "cep78"
 path = "src/main.rs"
 bench = false
 doctest = false

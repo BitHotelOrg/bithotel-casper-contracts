@@ -1,0 +1,17 @@
+[workspace]
+
+members = [
+    "marketplace/contract",
+    "marketplace/tests",
+    "marketplace/client/execute_listing_session",
+    "cep78/contract",
+    "cep78/tests",
+    "cep78/client/balance_of_session",
+    "cep78/client/get_approved_session",
+    "cep78/client/mint_session",
+    "cep78/client/owner_of_session",
+    "cep78/client/transfer_session",
+    "cep78/client/updated_receipts",
+    "cep78/test-contracts/minting_contract",
+    "cep78/test-contracts/mangle_named_keys",
+]
