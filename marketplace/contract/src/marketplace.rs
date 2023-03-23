@@ -2,6 +2,7 @@ use core::ops::Add;
 
 use crate::{
     error::MarketplaceError,
+    events::{emit, MarketplaceEvent},
     interfaces::icep78::ICEP78,
     utils::{get_current_address, is_admin, is_paused, is_whitelisted, named_uref_exists},
     Dict, Listing, Status, TokenId,
@@ -89,13 +90,7 @@ pub extern "C" fn add_listing() {
     if is_paused() && !is_admin(caller) {
         runtime::revert(MarketplaceError::ContractIsPaused);
     }
-    let marketplace_address = get_current_address(
-        runtime::get_call_stack()
-            .into_iter()
-            .rev()
-            .next()
-            .unwrap_or_revert(),
-    );
+    let marketplace_address = get_current_address();
     let collection = runtime::get_named_arg::<Key>(COLLECTION_ARG)
         .into_hash()
         .map(ContractHash::new)
@@ -135,6 +130,13 @@ pub extern "C" fn add_listing() {
     let next_listing_id = current_listing_id.add(1);
     listings.set(&next_listing_id.to_string(), listing);
     storage::add::<u64>(listing_counter_uref, 1u64);
+    emit(&MarketplaceEvent::AddListing {
+        listing_id: next_listing_id,
+        seller: caller,
+        collection,
+        token_id,
+        price,
+    })
 }
 
 #[no_mangle]
@@ -143,13 +145,7 @@ pub extern "C" fn cancel_listing() {
     if is_paused() && !is_admin(caller) {
         runtime::revert(MarketplaceError::ContractIsPaused);
     }
-    let marketplace_address = get_current_address(
-        runtime::get_call_stack()
-            .into_iter()
-            .rev()
-            .next()
-            .unwrap_or_revert(),
-    );
+    let marketplace_address = get_current_address();
     let listing_id = runtime::get_named_arg::<u64>(LISTING_ID_ARG);
 
     let listings = Dict::instance(LISTINGS_DICT);
@@ -176,6 +172,7 @@ pub extern "C" fn cancel_listing() {
         listing.owner.into(),
         listing.token_id,
     );
+    emit(&MarketplaceEvent::CancelListing { listing_id });
 }
 
 #[no_mangle]
@@ -184,13 +181,7 @@ pub extern "C" fn execute_listing() {
     if is_paused() && !is_admin(caller) {
         runtime::revert(MarketplaceError::ContractIsPaused);
     }
-    let marketplace_address = get_current_address(
-        runtime::get_call_stack()
-            .into_iter()
-            .rev()
-            .next()
-            .unwrap_or_revert(),
-    );
+    let marketplace_address = get_current_address();
 
     let listing_id = runtime::get_named_arg::<u64>(LISTING_ID_ARG);
     let caller_purse = runtime::get_named_arg::<URef>(PURSE_ARG);
@@ -223,6 +214,10 @@ pub extern "C" fn execute_listing() {
     .unwrap();
 
     nft.transfer(marketplace_address.into(), caller.into(), listing.token_id);
+    emit(&MarketplaceEvent::ExecuteListing {
+        listing_id,
+        buyer: caller,
+    });
 }
 
 #[no_mangle]
