@@ -142,6 +142,22 @@ pub enum NFTCoreError {
     InvalidAccessKeyName = 137,
     InvalidCheckForUpgrade = 138,
     InvalidNamedKeyConvention = 139,
+    OwnerReverseLookupModeNotTransferable = 140,
+    InvalidAdditionalRequiredMetadata = 141,
+    InvalidOptionalMetadata = 142,
+    MissingOptionalNFTMetadataKind = 143,
+    InvalidOptionalNFTMetadataKind = 144,
+    MissingAdditionalNFTMetadataKind = 145,
+    InvalidAdditionalNFTMetadataKind = 146,
+    InvalidRequirement = 147,
+    MissingEventsMode = 148,
+    InvalidEventsMode = 149,
+    CannotUpgradeToMoreSupply = 150,
+    MissingOperatorDict = 151,
+    MissingApprovedDict = 152,
+    MissingSpenderAccountHash = 153,
+    InvalidSpenderAccountHash = 154,
+    MissingOwnerTokenIdentifierKey = 155,
 }
 
 impl From<NFTCoreError> for ApiError {
