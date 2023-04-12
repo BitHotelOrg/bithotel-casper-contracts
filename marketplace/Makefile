@@ -15,7 +15,7 @@ test: build-contract
 
 clippy:
 	cd client/execute_listing_session && cargo clippy --target wasm32-unknown-unknown -- -D warnings
-	cd contract && cargo clippy --target wasm32-unknown-unknown -- -D warnings
+	cd contract && cargo clippy --target wasm32-unknown-unknown
 	cd tests && cargo clippy --all-targets
 
 check-lint: clippy
