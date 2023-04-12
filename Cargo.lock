@@ -25,7 +25,7 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
 name = "balance_of_session"
-version = "1.1.1"
+version = "1.2.0"
 dependencies = [
  "casper-contract",
  "casper-types",
@@ -144,6 +144,28 @@ dependencies = [
  "once_cell",
  "rand 0.8.5",
  "tempfile",
+]
+
+[[package]]
+name = "casper-event-standard"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d13741e5f5d2eb57fec7ebb80766730618c4809ef2d7dcb0460cae85fc84b2ac"
+dependencies = [
+ "casper-contract",
+ "casper-event-standard-macro",
+ "casper-types",
+]
+
+[[package]]
+name = "casper-event-standard-macro"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3520ef38533f4f1f875bae90bde34b80b6b88f7f27706cae8c95f9367955395e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -302,13 +324,16 @@ dependencies = [
 
 [[package]]
 name = "contract"
-version = "1.1.1"
+version = "1.2.0"
 dependencies = [
  "base16",
  "casper-contract",
- "casper-serde-json-wasm",
+ "casper-event-standard",
  "casper-types",
+ "hex",
  "serde",
+ "serde-json-wasm",
+ "serde_json",
 ]
 
 [[package]]
@@ -578,7 +603,7 @@ dependencies = [
 
 [[package]]
 name = "get_approved_session"
-version = "1.1.1"
+version = "1.2.0"
 dependencies = [
  "casper-contract",
  "casper-types",
@@ -719,6 +744,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a5bbe824c507c5da5956355e86a746d82e0e1464f65d862cc5e71da70e94b2c"
 dependencies = [
  "cfg-if 1.0.0",
+]
+
+[[package]]
+name = "is_approved_for_all_session"
+version = "1.2.0"
+dependencies = [
+ "casper-contract",
+ "casper-types",
 ]
 
 [[package]]
@@ -870,7 +903,7 @@ checksum = "8452105ba047068f40ff7093dd1d9da90898e63dd61736462e9cdda6a90ad3c3"
 
 [[package]]
 name = "mint_session"
-version = "1.1.1"
+version = "1.2.0"
 dependencies = [
  "casper-contract",
  "casper-types",
@@ -1019,7 +1052,7 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "owner_of_session"
-version = "1.1.1"
+version = "1.2.0"
 dependencies = [
  "casper-contract",
  "casper-types",
@@ -1051,9 +1084,9 @@ checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.47"
+version = "1.0.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ea3d908b0e36316caf9e9e2c4625cdde190a7e6f440d794667ed17a1855e725"
+checksum = "2b63bdb0cd06f1f4dedf69b254734f9b45af66e4a031e42a7480257d9898b435"
 dependencies = [
  "unicode-ident",
 ]
@@ -1103,9 +1136,9 @@ checksum = "a993555f31e5a609f617c12db6250dedcac1b0a85076912c436e6fc9b2c8e6a3"
 
 [[package]]
 name = "quote"
-version = "1.0.21"
+version = "1.0.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbe448f377a7d6961e30f5955f9b8d106c3f5e449d493ee1b125c1d43c2b5179"
+checksum = "4424af4bf778aae2051a77b60283332f386554255d722233d09fbfc7e30da2fc"
 dependencies = [
  "proc-macro2",
 ]
@@ -1274,6 +1307,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde-json-wasm"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a15bee9b04dd165c3f4e142628982ddde884c2022a89e8ddf99c4829bf2c3a58"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "serde_bytes"
 version = "0.11.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1362,9 +1404,9 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "syn"
-version = "1.0.105"
+version = "1.0.109"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "60b9b43d45702de4c839cb9b51d9f529c5dd26a4aff255b42b1ebc03e88ee908"
+checksum = "72b64191b275b66ffe2469e8af2c1cfe3bafa67b529ead792a6d0160888b4237"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1408,13 +1450,15 @@ dependencies = [
 
 [[package]]
 name = "tests"
-version = "1.1.1"
+version = "1.2.0"
 dependencies = [
  "base16",
  "blake2",
  "casper-engine-test-support",
+ "casper-event-standard",
  "casper-execution-engine",
  "casper-types",
+ "contract",
  "once_cell",
  "rand 0.8.5",
  "serde",
@@ -1487,7 +1531,7 @@ dependencies = [
 
 [[package]]
 name = "transfer_session"
-version = "1.1.1"
+version = "1.2.0"
 dependencies = [
  "casper-contract",
  "casper-types",
@@ -1531,7 +1575,7 @@ checksum = "f962df74c8c05a667b5ee8bcf162993134c104e96440b663c8daa176dc772d8c"
 
 [[package]]
 name = "updated_receipts"
-version = "1.1.1"
+version = "1.2.0"
 dependencies = [
  "casper-contract",
  "casper-types",
