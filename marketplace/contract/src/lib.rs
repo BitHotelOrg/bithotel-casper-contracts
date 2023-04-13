@@ -13,6 +13,7 @@ use structs::{
     dict::Dict,
     order::{Listing, Status},
 };
+mod events;
 pub type Time = u64;
 pub type TokenId = u64;
 pub type Token = (ContractHash, TokenId);

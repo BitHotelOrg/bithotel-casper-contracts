@@ -19,7 +19,12 @@ fn get_immediate_call_stack_item() -> Option<CallStackElement> {
     call_stack.into_iter().rev().nth(1)
 }
 
-pub fn get_current_address(call_stack_element: CallStackElement) -> Address {
+pub fn get_current_address() -> Address {
+    let call_stack_element = runtime::get_call_stack()
+        .into_iter()
+        .rev()
+        .next()
+        .unwrap_or_revert();
     match call_stack_element {
         CallStackElement::Session { account_hash } => Address::from(account_hash),
         CallStackElement::StoredSession { account_hash, .. } => {
