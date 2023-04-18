@@ -3,10 +3,8 @@ import {
   Contracts,
   RuntimeArgs,
   Keys,
-  CLString,
   CLU64,
 } from "casper-js-sdk";
-import { stringToKey } from "./utils";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -23,34 +21,27 @@ if (process.env.RPC_URI && process.env.PRIIVATE_KEY) {
 
 const casperClient = new CasperClient(rpcUri);
 
-const privateKeyPath = "/Users/bufo/Downloads/BitHotel_secret_key.pem";
-
-const key = Keys.Ed25519.loadKeyPairFromPrivateFile(privateKeyPath);
-
-const key2 = Keys.getKeysFromHexPrivKey(
+const key = Keys.getKeysFromHexPrivKey(
   privateKey,
   Keys.SignatureAlgorithm.Ed25519
 );
 
 const contractClient = new Contracts.Contract();
 contractClient.setContractHash(
-  "hash-0b659298a70a7bfcde35aceb49a0d7b4a34aed5e0a7e946db135d598edd411b9"
+  "hash-b590bbf67fb2f60bdb54a7295bbb602f63008e4d8bb49fefe093ec805283b82f"
 );
 
 const runtimeArgs = RuntimeArgs.fromMap({
-  operator: stringToKey(
-    "cc8d74f5cdd36bf926ebb47f57f6d6f2317846c852623fcee72bb5f756d99857"
-  ),
-  token_id: new CLU64(2),
+  listing_id: new CLU64(3),
 });
 
 const preparedDeploy = contractClient.callEntrypoint(
-  "approve",
+  "cancel_listing",
   runtimeArgs,
   key.publicKey,
   "casper-test",
-  "8000000000",
+  "35000000000",
   [key]
 );
 
-casperClient.putDeploy(preparedDeploy).then(console.log);
+casperClient.putDeploy(preparedDeploy).then(console.log).catch(console.error);

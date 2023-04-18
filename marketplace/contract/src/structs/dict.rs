@@ -19,10 +19,10 @@ impl Dict {
     }
 
     pub fn set<T: CLTyped + ToBytes>(&self, key: &str, value: T) {
-        storage::dictionary_put(self.uref, key, value);
+        storage::dictionary_put::<T>(self.uref, key, value);
     }
 
     pub fn get<T: CLTyped + FromBytes>(&self, key: &str) -> Option<T> {
-        storage::dictionary_get(self.uref, key).unwrap()
+        storage::dictionary_get::<T>(self.uref, key).unwrap()
     }
 }

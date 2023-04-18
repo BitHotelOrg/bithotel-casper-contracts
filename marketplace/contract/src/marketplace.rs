@@ -331,7 +331,7 @@ pub extern "C" fn call() {
     let add_listing_entry_point = EntryPoint::new(
         ENTRY_POINT_ADD_LISTING,
         vec![
-            Parameter::new(COLLECTION_ARG, CLType::String),
+            Parameter::new(COLLECTION_ARG, CLType::Key),
             Parameter::new(TOKEN_ID_ARG, CLType::U256),
             Parameter::new(PRICE_ARG, CLType::U256),
         ],
