@@ -129,7 +129,7 @@ pub extern "C" fn add_listing() {
     let current_listing_id = storage::read::<u64>(listing_counter_uref).unwrap().unwrap();
     let next_listing_id = current_listing_id.add(1);
     listings.set(&next_listing_id.to_string(), listing);
-    storage::add::<u64>(listing_counter_uref, 1u64);
+    storage::add(listing_counter_uref, 1u64);
     emit(&MarketplaceEvent::AddListing {
         listing_id: next_listing_id,
         seller: caller,
