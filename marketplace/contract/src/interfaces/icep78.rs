@@ -16,8 +16,8 @@ impl ICEP78 {
         ICEP78 { contract_hash }
     }
 
-    pub fn balance_of(&self, owner: Address) -> U256 {
-        runtime::call_contract(
+    pub fn balance_of(&self, owner: Address) -> u64 {
+        runtime::call_contract::<u64>(
             self.contract_hash,
             "balance_of",
             runtime_args! {
@@ -36,8 +36,8 @@ impl ICEP78 {
             },
         );
     }
-    pub fn get_approved(&self, owner: Address, token_id: TokenId) -> Option<Address> {
-        runtime::call_contract(
+    pub fn get_approved(&self, owner: Address, token_id: TokenId) -> Option<Key> {
+        runtime::call_contract::<Option<Key>>(
             self.contract_hash,
             "get_approved",
             runtime_args! {
@@ -47,8 +47,8 @@ impl ICEP78 {
         )
     }
 
-    pub fn owner_of(&self, token_id: TokenId) -> Option<Address> {
-        runtime::call_contract(
+    pub fn owner_of(&self, token_id: TokenId) -> Key {
+        runtime::call_contract::<Key>(
             self.contract_hash,
             "owner_of",
             runtime_args! {
