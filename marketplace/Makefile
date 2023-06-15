@@ -4,8 +4,8 @@ prepare:
 build-contract:
 	cd contract && cargo build --release --target wasm32-unknown-unknown
 	cd client/execute_listing_session && cargo build --release --target wasm32-unknown-unknown
-	wasm-strip ../target/wasm32-unknown-unknown/release/marketplace_contract.wasm 2>/dev/null | true
-	wasm-strip client/execute_listing_session/target/wasm32-unknown-unknown/release/execute_listing_call.wasm 2>/dev/null | true
+	wasm-strip ../target/wasm32-unknown-unknown/release/marketplace_contract.wasm
+	wasm-strip ../target/wasm32-unknown-unknown/release/execute_listing_call.wasm
 
 test: build-contract
 	mkdir -p tests/wasm
