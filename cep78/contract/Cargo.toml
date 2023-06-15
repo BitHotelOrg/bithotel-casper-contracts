@@ -22,10 +22,6 @@ bench = false
 doctest = false
 test = false
 
-[profile.release]
-codegen-units = 1
-lto = true
-
 [features]
 default = ["std", "contract-support"]
 std = ["casper-types/std"]

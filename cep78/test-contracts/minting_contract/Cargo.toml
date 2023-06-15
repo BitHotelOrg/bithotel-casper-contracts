@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-casper-contract = {version = "1.4.3", features = ["test-support"]}
+casper-contract = { version = "1.4.3", features = ["test-support"] }
 casper-types = "1.4.5"
 
 [[bin]]
@@ -15,7 +15,3 @@ path = "src/main.rs"
 bench = false
 doctest = false
 test = false
-
-[profile.release]
-codegen-units = 1
-lto = true

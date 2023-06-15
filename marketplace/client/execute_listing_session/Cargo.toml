@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-casper-contract = {version = "1.4.3", features = ["test-support"]}
+casper-contract = { version = "1.4.3", features = ["test-support"] }
 casper-types = "1.4.6"
 casper_types_derive = "0.1.0"
 
@@ -14,7 +14,3 @@ path = "src/main.rs"
 bench = false
 doctest = false
 test = false
-
-[profile.release]
-codegen-units = 1
-lto = true

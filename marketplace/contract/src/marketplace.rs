@@ -335,14 +335,14 @@ pub extern "C" fn call() {
             Parameter::new(TOKEN_ID_ARG, CLType::U256),
             Parameter::new(PRICE_ARG, CLType::U256),
         ],
-        CLType::URef,
+        CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Contract,
     );
     let cancel_listing_entry_point = EntryPoint::new(
         ENTRY_POINT_CANCEL_LISTING,
         vec![Parameter::new(LISTING_ID_ARG, CLType::U64)],
-        CLType::URef,
+        CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Contract,
     );
@@ -352,56 +352,56 @@ pub extern "C" fn call() {
             Parameter::new(LISTING_ID_ARG, CLType::U64),
             Parameter::new(PURSE_ARG, CLType::URef),
         ],
-        CLType::URef,
+        CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Contract,
     );
     let get_listing_entry_point = EntryPoint::new(
         ENTRY_POINT_GET_LISTING,
         vec![Parameter::new(LISTING_ID_ARG, CLType::U64)],
-        CLType::URef,
+        CLType::U8,
         EntryPointAccess::Public,
         EntryPointType::Contract,
     );
     let whitelist_entry_point = EntryPoint::new(
         ENTRY_POINT_WHITELIST,
         vec![Parameter::new(COLLECTION_ARG, CLType::Key)],
-        CLType::URef,
+        CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Contract,
     );
     let delist_entry_point = EntryPoint::new(
         ENTRY_POINT_DELIST,
         vec![Parameter::new(COLLECTION_ARG, CLType::Key)],
-        CLType::URef,
+        CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Contract,
     );
     let add_admin_entry_point = EntryPoint::new(
         ENTRY_POINT_ADD_ADMIN,
         vec![Parameter::new(ACCOUNT_ARG, CLType::Key)],
-        CLType::URef,
+        CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Contract,
     );
     let remove_admin_entry_point = EntryPoint::new(
         ENTRY_POINT_REMOVE_ADMIN,
         vec![Parameter::new(ACCOUNT_ARG, CLType::Key)],
-        CLType::URef,
+        CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Contract,
     );
     let pause_entry_point = EntryPoint::new(
         ENTRY_POINT_PAUSE,
         vec![],
-        CLType::URef,
+        CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Contract,
     );
     let un_pause_entry_point = EntryPoint::new(
         ENTRY_POINT_UN_PAUSE,
         vec![],
-        CLType::URef,
+        CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Contract,
     );
