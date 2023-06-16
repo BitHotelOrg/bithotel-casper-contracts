@@ -26,7 +26,7 @@ impl ICEP78 {
         )
     }
 
-    pub fn approve(&self, spender: Address, token_ids: Vec<U256>) {
+    pub fn approve(&self, spender: Address, token_ids: Vec<U256>) -> () {
         runtime::call_contract::<()>(
             self.contract_hash,
             "approve",
@@ -34,7 +34,7 @@ impl ICEP78 {
               "spender" => spender,
               "token_ids" => token_ids
             },
-        );
+        )
     }
     pub fn get_approved(&self, owner: Address, token_id: TokenId) -> Option<Key> {
         runtime::call_contract::<Option<Key>>(
