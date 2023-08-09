@@ -9,6 +9,7 @@ build-contract:
 
 test: build-contract
 	mkdir -p tests/wasm
+	cp ../target/wasm32-unknown-unknown/release/cep78.wasm tests/wasm/cep78.wasm
 	cp ../target/wasm32-unknown-unknown/release/marketplace_contract.wasm tests/wasm/marketplace.wasm
 	cp ../target/wasm32-unknown-unknown/release/execute_listing_call.wasm tests/wasm/execute_listing_call.wasm
 	cd tests && cargo test

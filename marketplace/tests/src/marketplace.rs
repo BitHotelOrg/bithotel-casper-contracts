@@ -79,6 +79,7 @@ pub fn deploy() -> (
             "identifier_mode" => 0u8,
             "metadata_mutability" => 1u8,
             "nft_holder_mode" => 2u8, // FIXME: check if this works
+            "reporting_mode" => 0u8
         },
     )
     .build();
@@ -90,7 +91,8 @@ pub fn deploy() -> (
     let marketplace_contract_hash =
         get_contract_hash(&builder, default_account, "marketplace_contract_hash");
 
-    let nft_contract_hash = get_contract_hash(&builder, default_account, "nft_contract");
+    let nft_contract_hash =
+        get_contract_hash(&builder, default_account, "cep78_contract_hash_Bit Hotel");
     (builder, marketplace_contract_hash, nft_contract_hash)
 }
 

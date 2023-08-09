@@ -34,8 +34,8 @@ pub fn get_current_address() -> Address {
         }
         CallStackElement::StoredContract {
             contract_package_hash,
-            ..
-        } => Address::from(contract_package_hash),
+            contract_hash,
+        } => Address::from(contract_hash),
     }
 }
 

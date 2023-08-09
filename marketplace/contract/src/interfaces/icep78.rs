@@ -57,8 +57,8 @@ impl ICEP78 {
         )
     }
 
-    pub fn transfer(&self, sender: Key, recipient: Key, token_id: TokenId) {
-        runtime::call_contract::<(String, Key)>(
+    pub fn transfer(&self, sender: Key, recipient: Key, token_id: TokenId) -> () {
+        runtime::call_contract::<()>(
             self.contract_hash,
             "transfer",
             runtime_args! {
@@ -66,6 +66,6 @@ impl ICEP78 {
                 "source_key" => sender,
                 "target_key" => recipient,
             },
-        );
+        )
     }
 }
