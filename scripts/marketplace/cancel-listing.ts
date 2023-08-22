@@ -12,9 +12,9 @@ dotenv.config();
 let rpcUri: string;
 let privateKey: string;
 
-if (process.env.RPC_URI && process.env.PRIIVATE_KEY) {
+if (process.env.RPC_URI && process.env.PRIVATE_KEY) {
   rpcUri = process.env.RPC_URI;
-  privateKey = process.env.PRIIVATE_KEY;
+  privateKey = process.env.PRIVATE_KEY;
 } else {
   throw new Error(`No rpcUri or privateKey found`);
 }
@@ -28,11 +28,11 @@ const key = Keys.getKeysFromHexPrivKey(
 
 const contractClient = new Contracts.Contract();
 contractClient.setContractHash(
-  "hash-b590bbf67fb2f60bdb54a7295bbb602f63008e4d8bb49fefe093ec805283b82f"
+  "hash-411f0c5ae537b18beabfe43601d3e2d238bd7b89e1566ff78fff66a07826a0db"
 );
 
 const runtimeArgs = RuntimeArgs.fromMap({
-  listing_id: new CLU64(3),
+  listing_id: new CLU64(4),
 });
 
 const preparedDeploy = contractClient.callEntrypoint(
