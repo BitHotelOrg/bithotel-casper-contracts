@@ -4,8 +4,8 @@ casper-client put-deploy  \
 --secret-key ~/Downloads/BitHotel_secret_key.pem \
 --payment-amount 350000000000 \
 --session-path ../target/wasm32-unknown-unknown/release/cep78.wasm  \
---session-arg "collection_name:string='BitHotel5'" \
---session-arg "collection_symbol:string='BTH5'" \
+--session-arg "collection_name:string='BitHotel6'" \
+--session-arg "collection_symbol:string='BTH6'" \
 --session-arg "total_token_supply:u64='100'" \
 --session-arg "ownership_mode:u8='2'" \
 --session-arg "nft_kind:u8='2'" \
@@ -14,4 +14,5 @@ casper-client put-deploy  \
 --session-arg "metadata_mutability:u8='1'" \
 --session-arg "minting_mode:u8='0'" \
 --session-arg "json_schema:string=''" \
---session-arg "owner_reverse_lookup_mode:u8='0'"
+--session-arg "owner_reverse_lookup_mode:u8='0'" \
+--session-arg "events_mode:u8='1'"
