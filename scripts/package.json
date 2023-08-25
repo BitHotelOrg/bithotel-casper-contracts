@@ -1,0 +1,19 @@
+{
+  "name": "scripts",
+  "version": "1.0.0",
+  "license": "MIT",
+  "scripts": {
+    "mint:dev": "export NODE_ENV=dev && ts-node cep78/mint.ts",
+    "mint:prod": "export NODE_ENV=prod && ts-node cep78/mint.ts",
+    "add-listing:dev": "export NODE_ENV=dev && ts-node marketplace/add-listing.ts",
+    "add-listing:prod": "export NODE_ENV=prod && ts-node marketplace/add-listing.ts"
+  },
+  "dependencies": {
+    "casper-js-sdk": "^2.15.2"
+  },
+  "devDependencies": {
+    "dotenv": "^16.0.3",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2"
+  }
+}

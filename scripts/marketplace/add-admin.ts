@@ -2,13 +2,13 @@ import {
   CasperClient,
   Contracts,
   RuntimeArgs,
+  CLString,
+  CLKey,
   Keys,
-  CLU64,
-  CLU512,
+  CLValueBuilder,
 } from "casper-js-sdk";
-import dotenv from "dotenv";
-import { readFileSync } from "fs";
 import { CasperHelpers } from "./helpers";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -28,28 +28,23 @@ const privateKeyPath = "/Users/bufo/Downloads/BitHotel_secret_key.pem";
 
 const key = Keys.Ed25519.loadKeyPairFromPrivateFile(privateKeyPath);
 
-const executeListingFile = readFileSync("./execute_listing_call.wasm");
-
-const wasm = Uint8Array.from(executeListingFile);
-
 const contractClient = new Contracts.Contract();
-
-const price = 2;
+contractClient.setContractHash(
+  "hash-411f0c5ae537b18beabfe43601d3e2d238bd7b89e1566ff78fff66a07826a0db"
+);
 
 const runtimeArgs = RuntimeArgs.fromMap({
-  marketplace_contract_hash: CasperHelpers.stringToKey(
-    "411f0c5ae537b18beabfe43601d3e2d238bd7b89e1566ff78fff66a07826a0db"
+  account: CasperHelpers.stringToKey(
+    "013cafb1912c0ca0dc6e0251905f29ebe01176371c298e513a24c0f2d9b2bbff28"
   ),
-  listing_id: new CLU64(26),
-  amount: new CLU512(price * 1_000_000_000),
 });
 
-const preparedDeploy = contractClient.install(
-  wasm,
+const preparedDeploy = contractClient.callEntrypoint(
+  "add_admin",
   runtimeArgs,
-  "15000000000",
   key.publicKey,
   "casper-test",
+  "5000000000",
   [key]
 );
 

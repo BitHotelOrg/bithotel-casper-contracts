@@ -6,23 +6,10 @@ import {
   CLKey,
   Keys,
 } from "casper-js-sdk";
-// import {
-//   getKeysFromHexPrivKey,
-//   SignatureAlgorithm,
-// } from "casper-js-sdk/dist/lib/Keys";
-import dotenv from "dotenv";
+import { getEnvironmentVars } from "../env";
+import "dotenv/config";
 
-dotenv.config();
-
-let rpcUri: string;
-let privateKey: string;
-
-if (process.env.RPC_URI && process.env.PRIVATE_KEY) {
-  rpcUri = process.env.RPC_URI;
-  privateKey = process.env.PRIVATE_KEY;
-} else {
-  throw new Error(`No rpcUri or privateKey found`);
-}
+const { rpcUri, privateKey, nft, chainName } = getEnvironmentVars();
 
 const casperClient = new CasperClient(rpcUri);
 
@@ -38,9 +25,7 @@ const recipientKey = Keys.getKeysFromHexPrivKey(
 );
 
 const contractClient = new Contracts.Contract();
-contractClient.setContractHash(
-  "hash-59a13d7a9c89d989a13b9b15e183eb0ab695b95c98fd98a082b171efacd1c3ca"
-);
+contractClient.setContractHash(nft);
 
 const metadata = {
   name: "CasperPunk Hotel Guest",
@@ -57,7 +42,7 @@ const metadata = {
 };
 
 const runtimeArgs = RuntimeArgs.fromMap({
-  token_owner: new CLKey(key.publicKey),
+  token_owner: new CLKey(recipientKey.publicKey),
   token_meta_data: new CLString(JSON.stringify(metadata)),
 });
 
@@ -65,7 +50,7 @@ const preparedDeploy = contractClient.callEntrypoint(
   "mint",
   runtimeArgs,
   key.publicKey,
-  "casper-test",
+  chainName,
   "5000000000",
   [key]
 );
