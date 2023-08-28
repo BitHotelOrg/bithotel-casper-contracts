@@ -6,7 +6,9 @@
     "mint:dev": "export NODE_ENV=dev && ts-node cep78/mint.ts",
     "mint:prod": "export NODE_ENV=prod && ts-node cep78/mint.ts",
     "add-listing:dev": "export NODE_ENV=dev && ts-node marketplace/add-listing.ts",
-    "add-listing:prod": "export NODE_ENV=prod && ts-node marketplace/add-listing.ts"
+    "add-listing:prod": "export NODE_ENV=prod && ts-node marketplace/add-listing.ts",
+    "add-admin:dev": "export NODE_ENV=dev && ts-node marketplace/add-admin.ts",
+    "add-admin:prod": "export NODE_ENV=prod && ts-node marketplace/add-admin.ts"
   },
   "dependencies": {
     "casper-js-sdk": "^2.15.2"
