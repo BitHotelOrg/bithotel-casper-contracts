@@ -8,7 +8,9 @@
     "add-listing:dev": "export NODE_ENV=dev && ts-node marketplace/add-listing.ts",
     "add-listing:prod": "export NODE_ENV=prod && ts-node marketplace/add-listing.ts",
     "add-admin:dev": "export NODE_ENV=dev && ts-node marketplace/add-admin.ts",
-    "add-admin:prod": "export NODE_ENV=prod && ts-node marketplace/add-admin.ts"
+    "add-admin:prod": "export NODE_ENV=prod && ts-node marketplace/add-admin.ts",
+    "remove-admin:dev": "export NODE_ENV=dev && ts-node marketplace/remove-admin.ts",
+    "remove-admin:prod": "export NODE_ENV=prod && ts-node marketplace/remove-admin.ts"
   },
   "dependencies": {
     "casper-js-sdk": "^2.15.2"

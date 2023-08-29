@@ -42,7 +42,7 @@ const runtimeArgs = RuntimeArgs.fromMap({
 });
 
 const preparedDeploy = contractClient.callEntrypoint(
-  "add_admin",
+  "remove_admin",
   runtimeArgs,
   key.publicKey,
   chainName,
